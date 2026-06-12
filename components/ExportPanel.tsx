@@ -1,200 +1,225 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
+import {
+  Check,
+  Clipboard,
+  Code2,
+  Download,
+  FileCode2,
+  FileText,
+} from "lucide-react";
 import { Blueprint } from "@/lib/mockResults";
-import { exportToMarkdown, exportToJSON } from "@/lib/exportMarkdown";
+import {
+  downloadBlueprint,
+  exportToJSON,
+  exportToMarkdown,
+} from "@/lib/exportMarkdown";
 
 interface ExportPanelProps {
   blueprint?: Blueprint;
 }
 
+type ExportAction = "markdown" | "json" | "mermaid";
+
+const getDateStamp = () => new Date().toISOString().split("T")[0];
+
+const getBaseFilename = (blueprint: Blueprint) =>
+  `blueprint-${blueprint.id || getDateStamp()}`;
+
 export const ExportPanel: React.FC<ExportPanelProps> = ({ blueprint }) => {
-  const [isExporting, setIsExporting] = useState(false);
-  const [exported, setExported] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
+  const [busyAction, setBusyAction] = useState<ExportAction | null>(null);
+
+  const markdown = useMemo(
+    () => (blueprint ? exportToMarkdown(blueprint) : ""),
+    [blueprint],
+  );
+  const json = useMemo(
+    () => (blueprint ? exportToJSON(blueprint) : ""),
+    [blueprint],
+  );
 
   if (!blueprint) {
     return (
-      <div className="text-center text-gray-500">
-        <p>No blueprint to export</p>
+      <div className="p-6 bg-gray-50 rounded-lg border border-gray-200 text-center text-gray-500">
+        No blueprint to export
       </div>
     );
   }
 
-  const handleExportMarkdown = async () => {
-    setIsExporting(true);
-    try {
-      const markdown = exportToMarkdown(blueprint);
-      const element = document.createElement("a");
-      const file = new Blob([markdown], { type: "text/markdown" });
-      element.href = URL.createObjectURL(file);
-      element.download = `blueprint-${new Date().toISOString().split("T")[0]}.md`;
-      document.body.appendChild(element);
-      element.click();
-      document.body.removeChild(element);
+  const showStatus = (message: string) => {
+    setStatus(message);
+    window.setTimeout(() => setStatus(null), 2400);
+  };
 
-      setExported("markdown");
-      setTimeout(() => setExported(null), 3000);
+  const copyText = async (
+    action: ExportAction,
+    content: string,
+    successMessage: string,
+  ) => {
+    setBusyAction(action);
+    try {
+      await navigator.clipboard.writeText(content);
+      showStatus(successMessage);
+    } catch {
+      showStatus("Copy failed. Use download instead or copy from the source view.");
     } finally {
-      setIsExporting(false);
+      setBusyAction(null);
     }
   };
 
-  const handleExportJSON = async () => {
-    setIsExporting(true);
-    try {
-      const json = exportToJSON(blueprint);
-      const element = document.createElement("a");
-      const file = new Blob([json], { type: "application/json" });
-      element.href = URL.createObjectURL(file);
-      element.download = `blueprint-${new Date().toISOString().split("T")[0]}.json`;
-      document.body.appendChild(element);
-      element.click();
-      document.body.removeChild(element);
+  const handleDownloadMarkdown = () => {
+    setBusyAction("markdown");
+    downloadBlueprint(markdown, `${getBaseFilename(blueprint)}.md`, "markdown");
+    setBusyAction(null);
+    showStatus("Markdown download started.");
+  };
 
-      setExported("json");
-      setTimeout(() => setExported(null), 3000);
-    } finally {
-      setIsExporting(false);
+  const handleDownloadJSON = () => {
+    setBusyAction("json");
+    downloadBlueprint(json, `${getBaseFilename(blueprint)}.json`, "json");
+    setBusyAction(null);
+    showStatus("JSON download started.");
+  };
+
+  const actionCards = [
+    {
+      title: "Copy Markdown",
+      description:
+        "Copy the complete stakeholder-ready blueprint document to the clipboard.",
+      icon: Clipboard,
+      tone: "blue",
+      onClick: () =>
+        copyText("markdown", markdown, "Markdown copied to clipboard."),
+      disabled: busyAction === "markdown",
+    },
+    {
+      title: "Download Markdown",
+      description:
+        "Download a .md file with requirements, design, roles, ALM, risks, and checklist.",
+      icon: FileText,
+      tone: "indigo",
+      onClick: handleDownloadMarkdown,
+      disabled: busyAction === "markdown",
+    },
+    {
+      title: "Download JSON",
+      description:
+        "Download the full structured blueprint payload for tooling or version control.",
+      icon: FileCode2,
+      tone: "green",
+      onClick: handleDownloadJSON,
+      disabled: busyAction === "json",
+    },
+    {
+      title: "Copy Mermaid",
+      description:
+        "Copy only the Mermaid diagram source for diagrams, docs, or review comments.",
+      icon: Code2,
+      tone: "amber",
+      onClick: () =>
+        copyText(
+          "mermaid",
+          blueprint.architectureDiagramMermaid,
+          "Mermaid source copied to clipboard.",
+        ),
+      disabled: busyAction === "mermaid",
+    },
+  ];
+
+  const getToneClasses = (tone: string) => {
+    switch (tone) {
+      case "blue":
+        return "border-blue-200 bg-blue-50 text-blue-700";
+      case "indigo":
+        return "border-indigo-200 bg-indigo-50 text-indigo-700";
+      case "green":
+        return "border-green-200 bg-green-50 text-green-700";
+      case "amber":
+        return "border-amber-200 bg-amber-50 text-amber-700";
+      default:
+        return "border-gray-200 bg-gray-50 text-gray-700";
     }
   };
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">
           Export Blueprint
         </h2>
-        <p className="text-gray-600 mb-6">
-          Download your solution blueprint in your preferred format. Share with
-          your team, version control, or integrate with your development tools.
+        <p className="text-gray-600">
+          Export documentation and source artifacts for review, implementation,
+          and version control. PDF export is intentionally not included yet.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Markdown Export */}
-        <div className="p-6 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-all text-left">
-          <div className="flex items-start justify-between mb-3">
-            <div>
-              <h3 className="font-semibold text-gray-900 text-lg">Markdown</h3>
-              <p className="text-sm text-gray-600">.md format</p>
-            </div>
-            <svg
-              className="w-8 h-8 text-blue-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-          </div>
-          <p className="text-sm text-gray-600 mb-4">
-            Design document with formatted tables, diagrams, and detailed
-            explanations. Perfect for documentation and stakeholder review.
-          </p>
-          <div className="flex gap-2">
-            <button
-              onClick={handleExportMarkdown}
-              disabled={isExporting}
-              className={`px-4 py-2 rounded-lg font-medium transition-all w-full ${
-                isExporting
-                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                  : "bg-blue-600 text-white hover:bg-blue-700"
-              }`}
-            >
-              {isExporting ? "Exporting..." : "Download Markdown"}
-            </button>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {actionCards.map((action) => {
+          const Icon = action.icon;
+          const toneClasses = getToneClasses(action.tone);
 
-        {/* JSON Export */}
-        <div className="p-6 border border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-all text-left">
-          <div className="flex items-start justify-between mb-3">
-            <div>
-              <h3 className="font-semibold text-gray-900 text-lg">JSON</h3>
-              <p className="text-sm text-gray-600">.json format</p>
-            </div>
-            <svg
-              className="w-8 h-8 text-green-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M13 10V3L4 14h7v7l9-11h-7z"
-              />
-            </svg>
-          </div>
-          <p className="text-sm text-gray-600 mb-4">
-            Structured data format for programmatic access. Integrate with CI/CD
-            pipelines, development tools, or generate additional artifacts.
-          </p>
-          <div className="flex gap-2">
+          return (
             <button
-              onClick={handleExportJSON}
-              disabled={isExporting}
-              className={`px-4 py-2 rounded-lg font-medium transition-all w-full ${
-                isExporting
-                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                  : "bg-green-600 text-white hover:bg-green-700"
-              }`}
+              key={action.title}
+              type="button"
+              onClick={action.onClick}
+              disabled={action.disabled}
+              className="group rounded-lg border border-gray-200 bg-white p-5 text-left transition-all hover:border-blue-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isExporting ? "Exporting..." : "Download JSON"}
+              <div className="flex items-start gap-4">
+                <div
+                  className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded border ${toneClasses}`}
+                >
+                  <Icon className="h-5 w-5" aria-hidden="true" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-bold text-gray-900">{action.title}</h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {action.description}
+                  </p>
+                </div>
+                <Download
+                  className="ml-auto h-4 w-4 flex-shrink-0 text-gray-400 opacity-0 transition-opacity group-hover:opacity-100"
+                  aria-hidden="true"
+                />
+              </div>
             </button>
-          </div>
-        </div>
+          );
+        })}
       </div>
 
-      {/* Success Message */}
-      {exported && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-          <div className="flex items-center gap-3">
-            <svg
-              className="w-5 h-5 text-green-600"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                clipRule="evenodd"
-              />
-            </svg>
-            <p className="text-green-800 font-medium">
-              ✓ Blueprint exported as {exported.toUpperCase()}
-            </p>
-          </div>
+      {status && (
+        <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-4">
+          <Check className="h-5 w-5 text-green-600" aria-hidden="true" />
+          <p className="text-sm font-medium text-green-800">{status}</p>
         </div>
       )}
 
-      {/* Additional Export Options */}
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-        <h3 className="font-semibold text-gray-900 mb-3">Next Steps</h3>
-        <ul className="space-y-2 text-sm text-gray-700">
-          <li className="flex items-center gap-2">
-            <span className="text-blue-600">✓</span>
-            Share Markdown with stakeholders for review and approval
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="text-blue-600">✓</span>
-            Version control JSON in your repository
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="text-blue-600">✓</span>
-            Use as reference for solution implementation
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="text-blue-600">✓</span>
-            Present to Solution Review Board for governance approval
-          </li>
-        </ul>
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-5">
+        <h3 className="font-semibold text-gray-900 mb-3">Markdown Includes</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-sm text-gray-700">
+          {[
+            "Original requirement",
+            "Executive summary",
+            "Recommended app type",
+            "Assumptions",
+            "Dataverse tables",
+            "Power Automate flows",
+            "Security roles",
+            "ALM plan",
+            "Risks",
+            "Implementation checklist",
+            "Follow-up questions",
+            "Mermaid diagram source",
+          ].map((item) => (
+            <div key={item} className="flex items-center gap-2">
+              <Check className="h-4 w-4 text-green-600" aria-hidden="true" />
+              <span>{item}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

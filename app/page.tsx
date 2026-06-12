@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { ResultDashboard } from "@/components/ResultDashboard";
 import { mockEmployeeOnboardingBlueprint } from "@/lib/mockResults";
 import { Blueprint } from "@/lib/mockResults";

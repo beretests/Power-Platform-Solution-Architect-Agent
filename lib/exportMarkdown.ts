@@ -1,6 +1,5 @@
 /**
- * Export utilities for blueprint generation
- * Converts blueprint data to Markdown format
+ * Export utilities for blueprint generation.
  */
 
 import { Blueprint } from "./mockResults";
@@ -10,6 +9,32 @@ export interface ExportOptions {
   includeALM?: boolean;
   includeDiagram?: boolean;
 }
+
+const formatDate = (value: string) => {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleDateString();
+};
+
+const formatAppType = (value: string) =>
+  value
+    .split("-")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+
+const escapeTableCell = (value: string | number | boolean | undefined) =>
+  String(value ?? "")
+    .replace(/\|/g, "\\|")
+    .replace(/\n/g, "<br />");
+
+const addList = (items: string[]) =>
+  items.length > 0
+    ? items.map((item) => `- ${item}`).join("\n")
+    : "- None specified";
 
 export const exportToMarkdown = (
   blueprint: Blueprint,
@@ -21,149 +46,221 @@ export const exportToMarkdown = (
     includeDiagram = true,
   } = options;
 
-  let markdown = "";
+  const lines: string[] = [];
 
-  // Header
-  markdown += `# Power Platform Solution Blueprint\n\n`;
-  markdown += `Generated: ${new Date(blueprint.createdAt).toLocaleDateString()}\n\n`;
+  lines.push("# Power Platform Solution Blueprint");
+  lines.push("");
+  lines.push(`Generated: ${formatDate(blueprint.createdAt)}`);
+  lines.push(`Blueprint ID: ${blueprint.id}`);
+  lines.push(`Mode: ${blueprint.mode}`);
+  lines.push("");
 
-  // Executive Summary
-  markdown += `## Executive Summary\n\n`;
-  markdown += `${blueprint.executiveSummary}\n\n`;
+  lines.push("## Original Requirement");
+  lines.push("");
+  lines.push(blueprint.requirement.trim());
+  lines.push("");
 
-  // Recommended App Type
-  markdown += `## Recommended App Type\n\n`;
-  markdown += `**${blueprint.recommendedAppType.replace("-", " ").toUpperCase()}**\n\n`;
+  lines.push("## Executive Summary");
+  lines.push("");
+  lines.push(blueprint.executiveSummary.trim());
+  lines.push("");
 
-  // Detected Pattern
-  markdown += `## Detected Pattern\n\n`;
-  markdown += `${blueprint.detectedPattern}\n\n`;
+  lines.push("## Recommended App Type");
+  lines.push("");
+  lines.push(`**${formatAppType(blueprint.recommendedAppType)}**`);
+  lines.push("");
+  lines.push(`Detected pattern: ${blueprint.detectedPattern}`);
+  lines.push("");
 
-  // Dataverse Schema
-  markdown += `## Dataverse Table Design\n\n`;
+  lines.push("## Assumptions");
+  lines.push("");
+  lines.push(addList(blueprint.assumptions));
+  lines.push("");
+
+  lines.push("## Dataverse Tables");
+  lines.push("");
   blueprint.dataverseTables.forEach((table) => {
-    markdown += `### ${table.displayName}\n\n`;
-    markdown += `${table.description}\n\n`;
-    markdown += `| Column | Type | Required | Description |\n`;
-    markdown += `|--------|------|----------|-------------|\n`;
-    table.columns.forEach((col) => {
-      markdown += `| ${col.displayName} | ${col.type} | ${col.required ? "Yes" : "No"} | ${col.description} |\n`;
+    lines.push(`### ${table.displayName}`);
+    lines.push("");
+    lines.push(table.description);
+    lines.push("");
+
+    if (table.ownershipType || table.primaryKey || table.auditingRecommendation) {
+      lines.push(`- Ownership: ${table.ownershipType ?? "Not specified"}`);
+      lines.push(
+        `- Primary key: ${
+          table.primaryKey && table.primaryKey.length > 0
+            ? table.primaryKey.join(", ")
+            : "Not specified"
+        }`,
+      );
+      lines.push(
+        `- Auditing: ${table.auditingRecommendation ?? "Not specified"}`,
+      );
+      lines.push("");
+    }
+
+    lines.push("| Column | Type | Required | Description |");
+    lines.push("| --- | --- | --- | --- |");
+    table.columns.forEach((column) => {
+      lines.push(
+        `| ${escapeTableCell(column.displayName)} | ${escapeTableCell(
+          column.type,
+        )} | ${column.required ? "Yes" : "No"} | ${escapeTableCell(
+          column.description,
+        )} |`,
+      );
     });
-    markdown += `\n`;
+    lines.push("");
+
+    if (table.relationships.length > 0) {
+      lines.push("Relationships:");
+      table.relationships.forEach((relationship) => {
+        lines.push(
+          `- ${relationship.target}: ${relationship.relationship}`,
+        );
+      });
+      lines.push("");
+    }
   });
 
-  // Power Automate Flows
-  markdown += `## Power Automate Flow Design\n\n`;
+  lines.push("## Power Automate Flows");
+  lines.push("");
   blueprint.powerAutomateFlows.forEach((flow) => {
-    markdown += `### ${flow.displayName}\n\n`;
-    markdown += `**Trigger:** ${flow.trigger}\n\n`;
-    markdown += `${flow.triggerDescription}\n\n`;
-    markdown += `**Actions:**\n`;
-    flow.actions.forEach((action) => {
-      markdown += `- ${action.name}: ${action.description}\n`;
+    lines.push(`### ${flow.displayName}`);
+    lines.push("");
+    lines.push(`- Trigger: ${flow.trigger}`);
+    lines.push(`- Trigger description: ${flow.triggerDescription}`);
+    lines.push(`- Error handling: ${flow.errorHandling}`);
+    lines.push("");
+    lines.push("Steps:");
+    flow.actions.forEach((action, index) => {
+      const condition = action.condition ? ` Condition: ${action.condition}` : "";
+      lines.push(
+        `${index + 1}. **${action.name}** - ${action.description}${condition}`,
+      );
     });
-    markdown += `\n**Error Handling:** ${flow.errorHandling}\n\n`;
+    lines.push("");
   });
 
-  // Security Model
-  markdown += `## Security Role Model\n\n`;
+  lines.push("## Security Roles");
+  lines.push("");
   blueprint.securityRoles.forEach((role) => {
-    markdown += `### ${role.displayName}\n\n`;
-    markdown += `${role.description}\n\n`;
-    markdown += `**Responsibilities:**\n`;
-    role.responsibilities.forEach((resp) => {
-      markdown += `- ${resp}\n`;
+    lines.push(`### ${role.displayName}`);
+    lines.push("");
+    lines.push(role.description);
+    lines.push("");
+    lines.push("Responsibilities:");
+    lines.push(addList(role.responsibilities));
+    lines.push("");
+    lines.push("| Table | Create | Read | Update | Delete |");
+    lines.push("| --- | --- | --- | --- | --- |");
+    role.tablePermissions.forEach((permission) => {
+      lines.push(
+        `| ${escapeTableCell(permission.table)} | ${
+          permission.create ? "Yes" : "No"
+        } | ${permission.read ? "Yes" : "No"} | ${
+          permission.update ? "Yes" : "No"
+        } | ${permission.delete ? "Yes" : "No"} |`,
+      );
     });
-    markdown += `\n`;
+    lines.push("");
   });
 
-  // ALM Strategy
   if (includeALM) {
-    markdown += `## Environment & ALM Strategy\n\n`;
+    lines.push("## ALM Plan");
+    lines.push("");
     blueprint.almPlan.forEach((stage) => {
-      markdown += `### ${stage.name}\n\n`;
-      markdown += `${stage.description}\n\n`;
-      markdown += `- **Purpose:** ${stage.purpose}\n`;
-      markdown += `- **User Base:** ${stage.userBase}\n`;
-      markdown += `- **Deployment Frequency:** ${stage.deploymentFrequency}\n\n`;
+      lines.push(`### ${stage.name}`);
+      lines.push("");
+      lines.push(stage.description);
+      lines.push("");
+      lines.push(`- Purpose: ${stage.purpose}`);
+      lines.push(`- User base: ${stage.userBase}`);
+      lines.push(`- Deployment frequency: ${stage.deploymentFrequency}`);
+      lines.push("");
     });
   }
 
-  // Risks
   if (includeRisks) {
-    markdown += `## Risks & Considerations\n\n`;
+    lines.push("## Risks");
+    lines.push("");
     blueprint.risks.forEach((risk) => {
-      markdown += `### ${risk.category} - ${risk.severity.toUpperCase()}\n\n`;
-      markdown += `**Issue:** ${risk.description}\n\n`;
-      markdown += `**Business Impact:** ${risk.businessImpact}\n\n`;
-      markdown += `**Mitigation:** ${risk.mitigation}\n\n`;
+      lines.push(`### ${risk.category}`);
+      lines.push("");
+      lines.push(`- Severity: ${risk.severity.toUpperCase()}`);
+      lines.push(`- Description: ${risk.description}`);
+      lines.push(`- Business impact: ${risk.businessImpact}`);
+      lines.push(`- Mitigation: ${risk.mitigation}`);
+      lines.push("");
     });
   }
 
-  // Diagram
-  if (includeDiagram) {
-    markdown += `## Architecture Diagram\n\n`;
-    markdown += "```mermaid\n";
-    markdown += `${blueprint.architectureDiagramMermaid}\n`;
-    markdown += "```\n\n";
-  }
-
-  // Readiness Score
-  markdown += `## Production Readiness Score\n\n`;
-  markdown += `**${blueprint.readinessScore}/100**\n\n`;
-  markdown += `*Note: This blueprint has been reviewed for completeness and best practices. `;
-  markdown += `Please conduct a formal Solution Review Board assessment before production deployment.*\n\n`;
-
-  // Licensing
-  markdown += `## Licensing & Costs\n\n`;
-  markdown += "```\n";
-  markdown += blueprint.licensingNotes;
-  markdown += "\n```\n\n";
-
-  // Implementation Checklist
-  markdown += `## Implementation Checklist\n\n`;
+  lines.push("## Implementation Checklist");
+  lines.push("");
   let currentPhase = "";
   blueprint.implementationChecklist.forEach((item) => {
     if (item.phase !== currentPhase) {
       currentPhase = item.phase;
-      markdown += `### ${item.phase}\n\n`;
+      lines.push(`### ${item.phase}`);
+      lines.push("");
     }
-    markdown += `- [ ] **${item.task}** (Owner: ${item.owner}, ${item.estimatedHours}h)\n`;
+
+    const dependencies =
+      item.dependencies.length > 0 ? item.dependencies.join(", ") : "None";
+    lines.push(
+      `- [ ] **${item.task}** - Owner: ${item.owner}; Estimate: ${item.estimatedHours}h; Dependencies: ${dependencies}`,
+    );
   });
-  markdown += `\n`;
+  lines.push("");
 
-  // Follow-up Questions
-  markdown += `## Follow-up Questions\n\n`;
-  markdown += `These questions should be answered during detailed discovery to refine the design:\n\n`;
-  blueprint.followUpQuestions.forEach((q) => {
-    markdown += `**Q: ${q.question}**\n`;
-    markdown += `*Rationale:* ${q.rationale}\n\n`;
+  lines.push("## Follow-up Questions");
+  lines.push("");
+  blueprint.followUpQuestions.forEach((item, index) => {
+    lines.push(`${index + 1}. **${item.question}**`);
+    lines.push(`   - Rationale: ${item.rationale}`);
+    if (item.suggestedAnswer) {
+      lines.push(`   - Suggested answer: ${item.suggestedAnswer}`);
+    }
   });
+  lines.push("");
 
-  // Footer
-  markdown += `---\n\n`;
-  markdown += `**Disclaimer:** This blueprint is a technical recommendation based on the provided requirements. `;
-  markdown += `All designs should be validated by your organization's governance and security teams.\n`;
+  if (includeDiagram) {
+    lines.push("## Mermaid Architecture Diagram");
+    lines.push("");
+    lines.push("```mermaid");
+    lines.push(blueprint.architectureDiagramMermaid.trim());
+    lines.push("```");
+    lines.push("");
+  }
 
-  return markdown;
+  lines.push("---");
+  lines.push("");
+  lines.push(
+    "Disclaimer: AI-generated architecture must be validated by a human solution architect and appropriate governance teams before production use.",
+  );
+
+  return `${lines.join("\n").trim()}\n`;
 };
 
-export const exportToJSON = (blueprint: Blueprint): string => {
-  return JSON.stringify(blueprint, null, 2);
-};
+export const exportToJSON = (blueprint: Blueprint): string =>
+  JSON.stringify(blueprint, null, 2);
 
 export const downloadBlueprint = (
   content: string,
   filename: string,
   format: "markdown" | "json",
 ) => {
-  const element = document.createElement("a");
-  const file = new Blob([content], {
-    type: format === "markdown" ? "text/markdown" : "application/json",
+  const blob = new Blob([content], {
+    type: format === "markdown" ? "text/markdown;charset=utf-8" : "application/json;charset=utf-8",
   });
-  element.href = URL.createObjectURL(file);
+  const url = URL.createObjectURL(blob);
+  const element = document.createElement("a");
+
+  element.href = url;
   element.download = filename;
   document.body.appendChild(element);
   element.click();
   document.body.removeChild(element);
+  URL.revokeObjectURL(url);
 };

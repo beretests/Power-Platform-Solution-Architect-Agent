@@ -22,6 +22,9 @@ export interface DataverseTable {
   description: string;
   columns: DataverseColumn[];
   relationships: DataverseRelationship[];
+  ownershipType?: "User" | "Team" | "Business Unit" | "Organization";
+  primaryKey?: string[];
+  auditingRecommendation?: string;
 }
 
 export interface FlowAction {
@@ -144,6 +147,10 @@ export const mockEmployeeOnboardingBlueprint: Blueprint = {
       name: "msdyn_employee",
       displayName: "Employee Profile",
       description: "Core employee information and onboarding master record",
+      ownershipType: "Organization",
+      primaryKey: ["msdyn_name", "msdyn_email"],
+      auditingRecommendation:
+        "Enable full auditing. Track all employee data changes for compliance (GDPR, SOX).",
       columns: [
         {
           name: "msdyn_name",
@@ -211,6 +218,10 @@ export const mockEmployeeOnboardingBlueprint: Blueprint = {
       name: "msdyn_onboardingtask",
       displayName: "Onboarding Task",
       description: "Individual onboarding tasks assigned to departments",
+      ownershipType: "Team",
+      primaryKey: ["msdyn_title", "msdyn_employee"],
+      auditingRecommendation:
+        "Enable auditing for task status changes and assignments for process audit trail.",
       columns: [
         {
           name: "msdyn_title",
@@ -288,6 +299,10 @@ export const mockEmployeeOnboardingBlueprint: Blueprint = {
       displayName: "Equipment Request",
       description:
         "IT equipment provisioning requests (laptop, phone, software licenses)",
+      ownershipType: "Team",
+      primaryKey: ["msdyn_serialnumber"],
+      auditingRecommendation:
+        "Track cost and asset allocation. Enable auditing for serial number assignments.",
       columns: [
         {
           name: "msdyn_employee",
@@ -350,6 +365,10 @@ export const mockEmployeeOnboardingBlueprint: Blueprint = {
       name: "msdyn_deskassignment",
       displayName: "Desk Assignment",
       description: "Physical office desk and workspace assignments",
+      ownershipType: "Team",
+      primaryKey: ["msdyn_deskid"],
+      auditingRecommendation:
+        "Track desk allocation and equipment assignments for office space management.",
       columns: [
         {
           name: "msdyn_employee",
@@ -405,6 +424,10 @@ export const mockEmployeeOnboardingBlueprint: Blueprint = {
       name: "msdyn_auditlog",
       displayName: "Audit Log",
       description: "Immutable audit trail of all onboarding activities",
+      ownershipType: "Organization",
+      primaryKey: ["msdyn_timestamp", "msdyn_userid"],
+      auditingRecommendation:
+        "Enable immutable logging. Critical for compliance, SOX, and regulatory audits. Retain for 7 years minimum.",
       columns: [
         {
           name: "msdyn_employee",
