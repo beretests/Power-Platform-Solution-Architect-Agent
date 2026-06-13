@@ -3,6 +3,11 @@
  * This will be replaced with actual AI-generated results from Azure OpenAI
  */
 
+import {
+  SolutionArchitectureResultSchema,
+  type SolutionArchitectureResult,
+} from "./schemas";
+
 export interface DataverseColumn {
   name: string;
   displayName: string;
@@ -1314,3 +1319,160 @@ export const mockEmployeeOnboardingBlueprint: Blueprint = {
 
 // Export the mock blueprint as the primary mock data
 export const mockBlueprint = mockEmployeeOnboardingBlueprint;
+
+const toTitleSeverity = (severity: Risk["severity"]) => {
+  switch (severity) {
+    case "high":
+      return "High";
+    case "medium":
+      return "Medium";
+    case "low":
+      return "Low";
+  }
+};
+
+const splitMultilineNotes = (value: string) =>
+  value
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+const formatPrivileges = (permission: TablePermission) => {
+  const privileges = [
+    permission.create ? "Create" : null,
+    permission.read ? "Read" : null,
+    permission.update ? "Update" : null,
+    permission.delete ? "Delete" : null,
+  ].filter(Boolean);
+
+  return `${permission.table}: ${
+    privileges.length > 0 ? privileges.join(", ") : "No direct table access"
+  }`;
+};
+
+export const mockArchitectureResult: SolutionArchitectureResult = {
+  id: mockEmployeeOnboardingBlueprint.id,
+  createdAt: mockEmployeeOnboardingBlueprint.createdAt,
+  mode: "generate",
+  requirement: mockEmployeeOnboardingBlueprint.requirement.trim(),
+  executiveSummary: mockEmployeeOnboardingBlueprint.executiveSummary.trim(),
+  detectedPattern: "onboarding",
+  recommendedAppType: {
+    appType: mockEmployeeOnboardingBlueprint.recommendedAppType,
+    rationale:
+      "The process is data-heavy, role-driven, and benefits from a model-driven app over structured Dataverse tables.",
+    alternatives: ["canvas", "hybrid"],
+  },
+  assumptions: mockEmployeeOnboardingBlueprint.assumptions,
+  dataverseTables: mockEmployeeOnboardingBlueprint.dataverseTables.map(
+    (table) => ({
+      name: table.name,
+      description: table.description,
+      ownershipType: table.ownershipType ?? "User",
+      columns: table.columns,
+      relationships: table.relationships,
+      keys: table.primaryKey ?? [],
+      auditingRecommendation:
+        table.auditingRecommendation ??
+        "Review auditing requirements before production deployment.",
+    }),
+  ),
+  powerAutomateFlows: mockEmployeeOnboardingBlueprint.powerAutomateFlows.map(
+    (flow) => ({
+      name: flow.displayName,
+      trigger: flow.trigger,
+      steps: flow.actions.map((action, index) => {
+        const condition = action.condition ? ` Condition: ${action.condition}` : "";
+
+        return `${index + 1}. ${action.name}: ${action.description}${condition}`;
+      }),
+      connectors: ["Dataverse", "Office 365 Outlook"],
+      errorHandling: flow.errorHandling,
+      retryPolicy:
+        "Use bounded retries for transient connector failures and escalate persistent failures to the solution owner.",
+      ownerRecommendation:
+        "Use a named business owner and production-safe service-owned connections where appropriate.",
+    }),
+  ),
+  securityRoles: mockEmployeeOnboardingBlueprint.securityRoles.map((role) => ({
+    name: role.displayName,
+    persona: role.description,
+    tablePrivileges: role.tablePermissions.map(formatPrivileges),
+    notes: role.responsibilities,
+  })),
+  almPlan: {
+    environments: mockEmployeeOnboardingBlueprint.almPlan.map(
+      (stage) =>
+        `${stage.name}: ${stage.description} Purpose: ${stage.purpose} Users: ${stage.userBase}. Deployment: ${stage.deploymentFrequency}`,
+    ),
+    solutionStrategy: [
+      "Use unmanaged solutions in development and managed solutions for test and production.",
+      "Version every release and keep implementation notes with the exported package.",
+    ],
+    connectionReferences: [
+      "Create connection references for Dataverse, Outlook, Teams, Approvals, and any premium connectors.",
+      "Validate production connection ownership before enabling flows.",
+    ],
+    environmentVariables: [
+      "Store mailbox addresses, team identifiers, queue identifiers, and feature flags as environment variables.",
+      "Set environment-specific values during import.",
+    ],
+    deploymentSteps: [
+      "Export managed solution from development.",
+      "Import and validate in test/UAT.",
+      "Collect approval from business, security, and platform owners.",
+      "Import to production and run smoke tests.",
+    ],
+    rollbackPlan: [
+      "Retain the previous managed solution package.",
+      "Disable new flows if validation fails.",
+      "Restore the prior version or deploy a forward-fix solution based on impact.",
+    ],
+  },
+  licensingNotes: splitMultilineNotes(mockEmployeeOnboardingBlueprint.licensingNotes),
+  risks: mockEmployeeOnboardingBlueprint.risks.map((risk) => ({
+    severity: toTitleSeverity(risk.severity),
+    area: risk.category,
+    description: risk.description,
+    mitigation: risk.mitigation,
+  })),
+  readinessScore: {
+    total: mockEmployeeOnboardingBlueprint.readinessScore,
+    accuracy: 81,
+    security: 74,
+    alm: 76,
+    scalability: 78,
+    usability: 82,
+    notes: [
+      "Validate compliance requirements with legal and security stakeholders.",
+      "Confirm production flow ownership and connection references.",
+      "Run UAT with HR, IT, Facilities, and department managers.",
+    ],
+  },
+  architectureDiagramMermaid:
+    mockEmployeeOnboardingBlueprint.architectureDiagramMermaid,
+  implementationChecklist:
+    mockEmployeeOnboardingBlueprint.implementationChecklist.map(
+      (item) =>
+        `${item.phase}: ${item.task} Owner: ${item.owner}. Estimate: ${item.estimatedHours}h.`,
+    ),
+  followUpQuestions: mockEmployeeOnboardingBlueprint.followUpQuestions.map(
+    (item) => item.question,
+  ),
+};
+
+export const getMockArchitectureResult = (): SolutionArchitectureResult => {
+  const result = SolutionArchitectureResultSchema.safeParse(
+    mockArchitectureResult,
+  );
+
+  if (!result.success) {
+    const details = result.error.issues
+      .map((issue) => `${issue.path.join(".") || "root"}: ${issue.message}`)
+      .join("; ");
+
+    throw new Error(`Mock architecture result failed schema validation: ${details}`);
+  }
+
+  return result.data;
+};

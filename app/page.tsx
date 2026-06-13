@@ -2,8 +2,8 @@
 
 import { useState, useRef } from "react";
 import { ResultDashboard } from "@/components/ResultDashboard";
-import { mockEmployeeOnboardingBlueprint } from "@/lib/mockResults";
-import { Blueprint } from "@/lib/mockResults";
+import { getMockArchitectureResult } from "@/lib/mockResults";
+import { SolutionArchitectureResult } from "@/lib/schemas";
 
 const examplePrompts = [
   {
@@ -31,7 +31,8 @@ const examplePrompts = [
 export default function Home() {
   const [requirement, setRequirement] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [blueprint, setBlueprint] = useState<Blueprint | null>(null);
+  const [blueprint, setBlueprint] =
+    useState<SolutionArchitectureResult | null>(null);
   const [showResults, setShowResults] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -46,7 +47,7 @@ export default function Home() {
     await new Promise((resolve) => setTimeout(resolve, 800));
 
     // Use mock data for now
-    setBlueprint(mockEmployeeOnboardingBlueprint);
+    setBlueprint(getMockArchitectureResult());
     setShowResults(true);
     setIsLoading(false);
   };
@@ -97,7 +98,7 @@ export default function Home() {
                 <p className="text-slate-600">
                   Production readiness:{" "}
                   <span className="font-semibold text-slate-900">
-                    {blueprint.readinessScore}/100
+                    {blueprint.readinessScore.total}/100
                   </span>
                 </p>
               </div>

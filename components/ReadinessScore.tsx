@@ -1,4 +1,5 @@
 import React from "react";
+import { ReadinessScore as ReadinessScoreType } from "@/lib/schemas";
 
 type CategoryKey = "accuracy" | "security" | "alm" | "scalability" | "usability";
 
@@ -8,6 +9,7 @@ interface CategoryScore {
 }
 
 interface ReadinessScoreProps {
+  readinessScore?: ReadinessScoreType;
   score?: number; // 0-100
   maxScore?: number;
   feedback?: string[];
@@ -119,14 +121,27 @@ const ScoreBar: React.FC<ScoreBarProps> = ({
 };
 
 export const ReadinessScore: React.FC<ReadinessScoreProps> = ({
+  readinessScore,
   score = 0,
   maxScore = 100,
   feedback = [],
   categoryScores,
 }) => {
-  const normalizedScore = clampScore(Math.round((score / maxScore) * 100));
+  const normalizedScore = readinessScore
+    ? clampScore(readinessScore.total)
+    : clampScore(Math.round((score / maxScore) * 100));
   const status = getStatus(normalizedScore);
-  const categories = getDerivedCategoryScores(normalizedScore, categoryScores);
+  const categories = readinessScore
+    ? [
+        { label: "Accuracy", score: readinessScore.accuracy },
+        { label: "Security", score: readinessScore.security },
+        { label: "ALM", score: readinessScore.alm },
+        { label: "Scalability", score: readinessScore.scalability },
+        { label: "Usability", score: readinessScore.usability },
+      ]
+    : getDerivedCategoryScores(normalizedScore, categoryScores);
+  const improvementAreas =
+    feedback.length > 0 ? feedback : readinessScore?.notes ?? [];
 
   return (
     <div className="w-full space-y-5 p-6 bg-white border border-gray-200 rounded-lg">
@@ -185,13 +200,13 @@ export const ReadinessScore: React.FC<ReadinessScoreProps> = ({
         </div>
       </div>
 
-      {feedback.length > 0 && (
+      {improvementAreas.length > 0 && (
         <div className="border-t border-gray-200 pt-4">
           <p className="text-sm font-semibold text-gray-700 mb-2">
             Improvement Areas
           </p>
           <ul className="space-y-1">
-            {feedback.map((item, idx) => (
+            {improvementAreas.map((item, idx) => (
               <li
                 key={idx}
                 className="text-sm text-gray-600 flex items-start gap-2"

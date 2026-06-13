@@ -1,17 +1,11 @@
 "use client";
 
 import React from "react";
-import { PowerAutomateFlow } from "@/lib/mockResults";
+import { Flow } from "@/lib/schemas";
 
 interface FlowDesignViewProps {
-  flows?: FlowDesignFlow[];
+  flows?: Flow[];
 }
-
-type FlowDesignFlow = PowerAutomateFlow & {
-  connectors?: string[];
-  retryPolicy?: string;
-  ownerRecommendation?: string;
-};
 
 const ownerWarningPattern =
   /\b(service account|service principal|privileged connector)\b/i;
@@ -38,11 +32,6 @@ export const FlowDesignView: React.FC<FlowDesignViewProps> = ({
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           {flows.map((flow) => {
-            const connectors = flow.connectors ?? [];
-            const retryPolicy = flow.retryPolicy ?? "No retry policy specified";
-            const ownerRecommendation =
-              flow.ownerRecommendation ?? "No owner recommendation specified";
-
             return (
               <div
                 key={flow.name}
@@ -52,13 +41,10 @@ export const FlowDesignView: React.FC<FlowDesignViewProps> = ({
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <h3 className="font-bold text-purple-900 text-lg mb-1">
-                        {flow.displayName}
+                        {flow.name}
                       </h3>
-                      <p className="text-sm text-purple-700">
-                        {flow.triggerDescription}
-                      </p>
                     </div>
-                    {ownerWarningPattern.test(ownerRecommendation) && (
+                    {ownerWarningPattern.test(flow.ownerRecommendation) && (
                       <span className="inline-flex w-fit items-center rounded bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800 border border-amber-200">
                         Owner review
                       </span>
@@ -83,23 +69,13 @@ export const FlowDesignView: React.FC<FlowDesignViewProps> = ({
                       Numbered Steps
                     </h4>
                     <ol className="space-y-3">
-                      {flow.actions.map((action, idx) => (
+                      {flow.steps.map((step, idx) => (
                         <li key={idx} className="flex gap-3">
                           <div className="flex-shrink-0 w-6 h-6 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-sm font-medium">
                             {idx + 1}
                           </div>
                           <div className="flex-grow">
-                            <p className="font-medium text-gray-900">
-                              {action.name}
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              {action.description}
-                            </p>
-                            {action.condition && (
-                              <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 px-2 py-1 rounded mt-2">
-                                Condition: {action.condition}
-                              </p>
-                            )}
+                            <p className="text-sm text-gray-700">{step}</p>
                           </div>
                         </li>
                       ))}
@@ -111,8 +87,8 @@ export const FlowDesignView: React.FC<FlowDesignViewProps> = ({
                       Connectors
                     </h4>
                     <div className="flex flex-wrap gap-2">
-                      {connectors.length > 0 ? (
-                        connectors.map((connector) => (
+                      {flow.connectors.length > 0 ? (
+                        flow.connectors.map((connector) => (
                           <span
                             key={connector}
                             className="px-2.5 py-1 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded text-xs font-semibold"
@@ -143,7 +119,7 @@ export const FlowDesignView: React.FC<FlowDesignViewProps> = ({
                         Retry Policy
                       </h4>
                       <p className="text-gray-700 bg-cyan-50 border border-cyan-200 px-4 py-3 rounded text-sm">
-                        {retryPolicy}
+                        {flow.retryPolicy}
                       </p>
                     </div>
                   </div>
@@ -153,7 +129,7 @@ export const FlowDesignView: React.FC<FlowDesignViewProps> = ({
                       Owner Recommendation
                     </h4>
                     <p className="text-gray-700 bg-gray-50 border border-gray-200 px-4 py-3 rounded text-sm">
-                      {ownerRecommendation}
+                      {flow.ownerRecommendation}
                     </p>
                   </div>
                 </div>

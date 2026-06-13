@@ -9,7 +9,7 @@ import {
   FileCode2,
   FileText,
 } from "lucide-react";
-import { Blueprint } from "@/lib/mockResults";
+import { SolutionArchitectureResult } from "@/lib/schemas";
 import {
   downloadBlueprint,
   exportToJSON,
@@ -17,14 +17,14 @@ import {
 } from "@/lib/exportMarkdown";
 
 interface ExportPanelProps {
-  blueprint?: Blueprint;
+  blueprint?: SolutionArchitectureResult;
 }
 
 type ExportAction = "markdown" | "json" | "mermaid";
 
 const getDateStamp = () => new Date().toISOString().split("T")[0];
 
-const getBaseFilename = (blueprint: Blueprint) =>
+const getBaseFilename = (blueprint: SolutionArchitectureResult) =>
   `blueprint-${blueprint.id || getDateStamp()}`;
 
 export const ExportPanel: React.FC<ExportPanelProps> = ({ blueprint }) => {

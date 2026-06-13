@@ -1,13 +1,6 @@
 import React from "react";
 import { AlertTriangle, CheckCircle2, ShieldAlert } from "lucide-react";
-
-interface Risk {
-  id: string;
-  category: string;
-  description: string;
-  severity: "low" | "medium" | "high";
-  mitigation: string;
-}
+import { Risk } from "@/lib/schemas";
 
 interface RiskPanelProps {
   risks?: Risk[];
@@ -25,10 +18,10 @@ interface SeverityConfig {
   iconClass: string;
 }
 
-const severityOrder: Severity[] = ["high", "medium", "low"];
+const severityOrder: Severity[] = ["High", "Medium", "Low"];
 
 const severityConfig: Record<Severity, SeverityConfig> = {
-  high: {
+  High: {
     label: "High",
     description: "Requires explicit ownership before production approval.",
     icon: ShieldAlert,
@@ -37,7 +30,7 @@ const severityConfig: Record<Severity, SeverityConfig> = {
     badgeClass: "bg-red-100 text-red-800 border-red-200",
     iconClass: "text-red-700 bg-white border-red-200",
   },
-  medium: {
+  Medium: {
     label: "Medium",
     description: "Track during delivery and verify mitigation in UAT.",
     icon: AlertTriangle,
@@ -46,7 +39,7 @@ const severityConfig: Record<Severity, SeverityConfig> = {
     badgeClass: "bg-amber-100 text-amber-800 border-amber-200",
     iconClass: "text-amber-700 bg-white border-amber-200",
   },
-  low: {
+  Low: {
     label: "Low",
     description: "Monitor as part of normal solution governance.",
     icon: CheckCircle2,
@@ -81,7 +74,7 @@ export const RiskPanel: React.FC<RiskPanelProps> = ({ risks = [] }) => {
           {groupedRisks.map(({ severity, risks: risksForSeverity }) => {
             const config = severityConfig[severity];
             const Icon = config.icon;
-            const isHigh = severity === "high";
+            const isHigh = severity === "High";
 
             return (
               <section
@@ -127,7 +120,7 @@ export const RiskPanel: React.FC<RiskPanelProps> = ({ risks = [] }) => {
                   >
                     {risksForSeverity.map((risk) => (
                       <article
-                        key={risk.id}
+                        key={`${risk.severity}-${risk.area}-${risk.description}`}
                         className={`bg-white border rounded-lg p-4 ${
                           isHigh
                             ? "border-red-300 shadow-sm"
@@ -140,7 +133,7 @@ export const RiskPanel: React.FC<RiskPanelProps> = ({ risks = [] }) => {
                               Area
                             </p>
                             <h4 className="font-bold text-gray-900">
-                              {risk.category}
+                              {risk.area}
                             </h4>
                           </div>
                           {isHigh && (

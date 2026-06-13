@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Blueprint } from "@/lib/mockResults";
+import { SolutionArchitectureResult } from "@/lib/schemas";
 import { OverviewTab } from "./OverviewTab";
 import { DataverseSchemaView } from "./DataverseSchemaView";
 import { FlowDesignView } from "./FlowDesignView";
@@ -13,7 +13,7 @@ import { ReadinessScore } from "./ReadinessScore";
 import { ExportPanel } from "./ExportPanel";
 
 interface ResultDashboardProps {
-  blueprint?: Blueprint;
+  blueprint?: SolutionArchitectureResult;
   isLoading?: boolean;
 }
 
@@ -123,7 +123,7 @@ export const ResultDashboard: React.FC<ResultDashboardProps> = ({
                   App Type
                 </p>
                 <p className="font-semibold text-white text-sm capitalize">
-                  {blueprint.recommendedAppType.replace("-", " ")}
+                  {blueprint.recommendedAppType.appType.replace("-", " ")}
                 </p>
               </div>
             </div>
@@ -136,7 +136,7 @@ export const ResultDashboard: React.FC<ResultDashboardProps> = ({
                   Readiness
                 </p>
                 <p className="font-semibold text-white text-sm">
-                  {blueprint.readinessScore}/100
+                  {blueprint.readinessScore.total}/100
                 </p>
               </div>
             </div>
@@ -302,8 +302,7 @@ export const ResultDashboard: React.FC<ResultDashboardProps> = ({
       <div className="border-t border-gray-200 bg-gray-50 px-8 py-6">
         <div className="max-w-7xl mx-auto flex justify-between items-start">
           <ReadinessScore
-            score={blueprint.readinessScore}
-            maxScore={100}
+            readinessScore={blueprint.readinessScore}
             feedback={[
               "Ensure IT system integrations are planned",
               "Validate compliance requirements with legal team",

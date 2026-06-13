@@ -1,35 +1,35 @@
 "use client";
 
 import React from "react";
-import { SecurityRole as SecurityRoleType } from "@/lib/mockResults";
+import { SecurityRole } from "@/lib/schemas";
 
 interface SecurityModelViewProps {
-  roles?: SecurityModelRole[];
+  roles?: SecurityRole[];
 }
-
-type SecurityModelRole = SecurityRoleType & {
-  persona?: string;
-  notes?: string[];
-};
 
 const privilegeLabels = ["Create", "Read", "Update", "Delete"] as const;
 
 type Privilege = (typeof privilegeLabels)[number];
 
 const getPrivilegeValue = (
-  permission: SecurityRoleType["tablePermissions"][number],
+  privileges: string[],
   privilege: Privilege,
 ) => {
-  switch (privilege) {
-    case "Create":
-      return permission.create;
-    case "Read":
-      return permission.read;
-    case "Update":
-      return permission.update;
-    case "Delete":
-      return permission.delete;
-  }
+  return privileges.some(
+    (item) => item.toLowerCase() === privilege.toLowerCase(),
+  );
+};
+
+const parseTablePrivilege = (value: string) => {
+  const [table, privilegeText = ""] = value.split(":");
+
+  return {
+    table: table.trim(),
+    privileges: privilegeText
+      .split(",")
+      .map((privilege) => privilege.trim())
+      .filter(Boolean),
+  };
 };
 
 export const SecurityModelView: React.FC<SecurityModelViewProps> = ({
@@ -65,11 +65,7 @@ export const SecurityModelView: React.FC<SecurityModelViewProps> = ({
       ) : (
         <div className="space-y-6">
           {roles.map((role) => {
-            const notes =
-              role.notes && role.notes.length > 0
-                ? role.notes
-                : role.responsibilities;
-            const persona = role.persona ?? role.description;
+            const tablePrivileges = role.tablePrivileges.map(parseTablePrivilege);
 
             return (
               <div
@@ -80,11 +76,8 @@ export const SecurityModelView: React.FC<SecurityModelViewProps> = ({
                   <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                     <div>
                       <h3 className="font-bold text-green-900 text-lg">
-                        {role.displayName}
+                        {role.name}
                       </h3>
-                      <p className="text-xs text-green-700 font-semibold mt-1">
-                        Role ID: {role.name}
-                      </p>
                     </div>
                     <span className="inline-flex w-fit rounded bg-white px-2.5 py-1 text-xs font-semibold text-green-800 border border-green-200">
                       Least privilege
@@ -98,7 +91,7 @@ export const SecurityModelView: React.FC<SecurityModelViewProps> = ({
                       Persona
                     </h4>
                     <p className="text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded px-4 py-3">
-                      {persona}
+                      {role.persona}
                     </p>
                   </div>
 
@@ -124,14 +117,14 @@ export const SecurityModelView: React.FC<SecurityModelViewProps> = ({
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200">
-                          {role.tablePermissions.map((permission) => (
+                          {tablePrivileges.map((permission) => (
                             <tr key={permission.table}>
                               <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap">
                                 {permission.table}
                               </td>
                               {privilegeLabels.map((privilege) => {
                                 const isAllowed = getPrivilegeValue(
-                                  permission,
+                                  permission.privileges,
                                   privilege,
                                 );
 
@@ -168,7 +161,7 @@ export const SecurityModelView: React.FC<SecurityModelViewProps> = ({
                       Notes
                     </h4>
                     <ul className="space-y-2">
-                      {notes.map((note, idx) => (
+                      {role.notes.map((note, idx) => (
                         <li key={idx} className="flex gap-2 text-sm text-gray-700">
                           <span className="text-green-600 font-bold flex-shrink-0">
                             ✓

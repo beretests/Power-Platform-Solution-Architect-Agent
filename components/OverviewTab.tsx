@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
-import { Blueprint } from "@/lib/mockResults";
+import React from "react";
+import { SolutionArchitectureResult } from "@/lib/schemas";
 
 interface OverviewTabProps {
-  blueprint?: Blueprint;
+  blueprint?: SolutionArchitectureResult;
 }
 
 const appTypeDetails: Record<
@@ -38,8 +38,6 @@ const appTypeDetails: Record<
 };
 
 export const OverviewTab: React.FC<OverviewTabProps> = ({ blueprint }) => {
-  const [expandedQuestion, setExpandedQuestion] = useState<number | null>(null);
-
   if (!blueprint) {
     return (
       <div className="flex items-center justify-center h-64 text-gray-500">
@@ -48,10 +46,10 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ blueprint }) => {
     );
   }
 
-  const appTypeKey = blueprint.recommendedAppType;
+  const appTypeKey = blueprint.recommendedAppType.appType;
   const appTypeInfo =
     appTypeDetails[appTypeKey] || appTypeDetails["model-driven"];
-  const displayAppType = blueprint.recommendedAppType.replace("-", " ");
+  const displayAppType = blueprint.recommendedAppType.appType.replace("-", " ");
 
   return (
     <div className="space-y-6">
@@ -85,13 +83,18 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ blueprint }) => {
             </div>
           </div>
           <p className="text-sm text-gray-700 font-medium mb-3">
-            {appTypeInfo.description}
+            {blueprint.recommendedAppType.rationale || appTypeInfo.description}
           </p>
           <div className="bg-purple-50 rounded border border-purple-200 p-2">
             <p className="text-xs text-purple-900 font-semibold">
               ✓ {appTypeInfo.rationale}
             </p>
           </div>
+          {blueprint.recommendedAppType.alternatives.length > 0 && (
+            <p className="text-xs text-gray-500 mt-3">
+              Alternatives: {blueprint.recommendedAppType.alternatives.join(", ")}
+            </p>
+          )}
         </div>
 
         {/* Detected Pattern Card */}
@@ -144,9 +147,14 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ blueprint }) => {
           </h3>
         </div>
         <div className="bg-indigo-50 rounded border border-indigo-200 p-4">
-          <p className="text-gray-800 font-medium leading-relaxed whitespace-pre-wrap">
-            {blueprint.licensingNotes}
-          </p>
+          <ul className="space-y-2">
+            {blueprint.licensingNotes.map((note, idx) => (
+              <li key={idx} className="flex gap-2 text-gray-800 font-medium">
+                <span className="text-indigo-600 flex-shrink-0">✓</span>
+                <span>{note}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
 
@@ -163,57 +171,21 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ blueprint }) => {
                 {blueprint.followUpQuestions.length} questions
               </span>
             </div>
-            <div className="space-y-2">
-              {blueprint.followUpQuestions.map((item, idx) => (
-                <div
+            <ol className="space-y-2">
+              {blueprint.followUpQuestions.map((question, idx) => (
+                <li
                   key={idx}
-                  className="border border-gray-200 rounded-lg overflow-hidden hover:border-cyan-300 transition-colors"
+                  className="border border-gray-200 rounded-lg px-4 py-3 flex items-start gap-3"
                 >
-                  <button
-                    onClick={() =>
-                      setExpandedQuestion(expandedQuestion === idx ? null : idx)
-                    }
-                    className="w-full px-4 py-3 flex items-start gap-3 hover:bg-cyan-50 transition-colors text-left"
-                  >
-                    <span className="text-cyan-600 font-bold flex-shrink-0 mt-0.5">
-                      {idx + 1}.
-                    </span>
-                    <span className="flex-1 font-medium text-gray-900">
-                      {item.question}
-                    </span>
-                    <span
-                      className={`text-cyan-600 flex-shrink-0 transition-transform ${
-                        expandedQuestion === idx ? "rotate-180" : ""
-                      }`}
-                    >
-                      ▼
-                    </span>
-                  </button>
-                  {expandedQuestion === idx && (
-                    <div className="bg-cyan-50 border-t border-gray-200 px-4 py-3 space-y-2">
-                      <div>
-                        <p className="text-xs font-semibold text-gray-500 uppercase mb-1">
-                          Rationale
-                        </p>
-                        <p className="text-gray-700 font-medium">
-                          {item.rationale}
-                        </p>
-                      </div>
-                      {item.suggestedAnswer && (
-                        <div>
-                          <p className="text-xs font-semibold text-gray-500 uppercase mb-1">
-                            Suggested Answer
-                          </p>
-                          <p className="text-gray-700 font-medium">
-                            {item.suggestedAnswer}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+                  <span className="text-cyan-600 font-bold flex-shrink-0 mt-0.5">
+                    {idx + 1}.
+                  </span>
+                  <span className="flex-1 font-medium text-gray-900">
+                    {question}
+                  </span>
+                </li>
               ))}
-            </div>
+            </ol>
           </div>
         )}
     </div>
