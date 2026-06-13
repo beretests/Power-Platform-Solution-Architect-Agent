@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { ResultDashboard } from "@/components/ResultDashboard";
 import { getMockArchitectureResult } from "@/lib/mockResults";
 import { SolutionArchitectureResult } from "@/lib/schemas";
+import { safeParseArchitectureResult } from "@/lib/validators";
 
 const examplePrompts = [
   {
@@ -34,26 +35,69 @@ export default function Home() {
   const [blueprint, setBlueprint] =
     useState<SolutionArchitectureResult | null>(null);
   const [showResults, setShowResults] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleGenerateBlueprint = async () => {
     if (!requirement.trim()) {
-      alert("Please enter a business requirement");
+      setApiError("Please enter a business requirement before generating.");
       return;
     }
 
     setIsLoading(true);
-    // Simulate API call with 800ms delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    setApiError(null);
 
-    // Use mock data for now
+    try {
+      const response = await fetch("/api/architect", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ requirement }),
+      });
+
+      const responseBody: unknown = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const message =
+          responseBody &&
+          typeof responseBody === "object" &&
+          "error" in responseBody &&
+          typeof responseBody.error === "string"
+            ? responseBody.error
+            : "The architecture service could not generate a blueprint.";
+
+        setApiError(message);
+        return;
+      }
+
+      const parsedResult = safeParseArchitectureResult(responseBody);
+
+      if (!parsedResult.success) {
+        setApiError(parsedResult.error);
+        return;
+      }
+
+      setBlueprint(parsedResult.data);
+      setShowResults(true);
+    } catch {
+      setApiError(
+        "We could not reach the architecture service. You can try again or use the demo result.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUseDemoResult = () => {
+    setApiError(null);
     setBlueprint(getMockArchitectureResult());
     setShowResults(true);
-    setIsLoading(false);
   };
 
   const handleExampleClick = (example: (typeof examplePrompts)[0]) => {
     setRequirement(example.description);
+    setApiError(null);
     textareaRef.current?.focus();
   };
 
@@ -61,6 +105,7 @@ export default function Home() {
     setShowResults(false);
     setBlueprint(null);
     setRequirement("");
+    setApiError(null);
   };
 
   if (showResults && blueprint) {
@@ -219,9 +264,24 @@ export default function Home() {
               className="w-full h-48 p-4 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none font-medium text-slate-900 placeholder-slate-400"
             />
 
+            {apiError && (
+              <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                {apiError}
+              </div>
+            )}
+
             {/* Generate Button */}
-            <div className="mt-6 flex justify-end">
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
               <button
+                type="button"
+                onClick={handleUseDemoResult}
+                disabled={isLoading}
+                className="px-8 py-3 rounded-lg font-semibold transition-all border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Use demo result
+              </button>
+              <button
+                type="button"
                 onClick={handleGenerateBlueprint}
                 disabled={isLoading}
                 className={`px-8 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 ${
