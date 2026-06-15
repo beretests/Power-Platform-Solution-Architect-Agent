@@ -1,6 +1,8 @@
 import {
-  SolutionArchitectureResult,
+  ReviewResultSchema,
   SolutionArchitectureResultSchema,
+  type ReviewResult,
+  type SolutionArchitectureResult,
 } from "./schemas";
 
 export const validateRequirementInput = (
@@ -60,5 +62,34 @@ export const safeParseArchitectureResult = (
   return {
     success: false,
     error: `The architecture result is missing or has invalid data${location}. ${firstIssue.message}`,
+  };
+};
+
+export const safeParseReviewResult = (
+  data: unknown,
+):
+  | { success: true; data: ReviewResult }
+  | { success: false; error: string } => {
+  const result = ReviewResultSchema.safeParse(data);
+
+  if (result.success) {
+    return { success: true, data: result.data };
+  }
+
+  const firstIssue = result.error.issues[0];
+
+  if (!firstIssue) {
+    return {
+      success: false,
+      error: "The review result could not be validated.",
+    };
+  }
+
+  const path = firstIssue.path.join(".");
+  const location = path ? ` in '${path}'` : "";
+
+  return {
+    success: false,
+    error: `The review result is missing or has invalid data${location}. ${firstIssue.message}`,
   };
 };

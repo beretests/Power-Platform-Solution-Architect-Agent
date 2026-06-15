@@ -5,6 +5,7 @@
 
 import {
   SolutionArchitectureResultSchema,
+  type ReviewResult,
   type SolutionArchitectureResult,
 } from "./schemas";
 
@@ -1476,3 +1477,399 @@ export const getMockArchitectureResult = (): SolutionArchitectureResult => {
 
   return result.data;
 };
+
+export const getMockReviewResult = (): ReviewResult => ({
+  id: "review-onboarding-weak-design-001",
+  createdAt: new Date().toISOString(),
+  mode: "review",
+  requirement:
+    "We will build an onboarding canvas app in the default environment. All onboarding requests will be stored in a SharePoint list. All users will have edit access. A flow owned by the maker will send emails to IT. No test environment is planned. We will manually recreate the app in production when ready.",
+  executiveSummary:
+    "The proposed onboarding design has significant production risks across environment strategy, security, data architecture, flow ownership, and ALM. It should not move toward production without redesigning the data layer, access model, environment strategy, and deployment approach.",
+  detectedPattern: "onboarding",
+  recommendedAppType: {
+    appType: "model-driven",
+    rationale:
+      "Employee onboarding is process-heavy and data-centric, with relational records, audit requirements, role-based access, and status-driven workflows. A model-driven app backed by Dataverse is a better fit than a standalone canvas app over a SharePoint list.",
+    alternatives: [
+      "Use a canvas app only for a targeted mobile task experience on top of Dataverse.",
+      "Use Power Pages only if external candidates or partners need access.",
+    ],
+  },
+  assumptions: [
+    "Employee onboarding records require an auditable history of status changes and approvals.",
+    "HR, IT, managers, and Facilities require different access levels.",
+    "Production deployment must follow tenant governance and ALM practices.",
+  ],
+  dataverseTables: [
+    {
+      name: "Onboarding Request",
+      description:
+        "Primary onboarding request record replacing the proposed SharePoint list for relational and auditable data.",
+      ownershipType: "User or Team",
+      columns: [
+        {
+          name: "employeeName",
+          displayName: "Employee Name",
+          type: "Text",
+          required: true,
+          description: "Name of the employee being onboarded.",
+        },
+        {
+          name: "startDate",
+          displayName: "Start Date",
+          type: "Date",
+          required: true,
+          description: "Expected first day for onboarding planning.",
+        },
+        {
+          name: "status",
+          displayName: "Status",
+          type: "Choice",
+          required: true,
+          description: "Draft, Submitted, Approved, In Progress, Complete.",
+        },
+      ],
+      relationships: [
+        {
+          target: "Onboarding Task",
+          relationship: "One onboarding request has many onboarding tasks.",
+        },
+      ],
+      keys: ["employeeName", "startDate"],
+      auditingRecommendation:
+        "Enable Dataverse auditing for status, owner, approval, and assignment changes before production use.",
+    },
+    {
+      name: "Onboarding Task",
+      description:
+        "Department-specific onboarding tasks for IT, HR, Facilities, and managers.",
+      ownershipType: "Team",
+      columns: [
+        {
+          name: "taskName",
+          displayName: "Task Name",
+          type: "Text",
+          required: true,
+          description: "Task to complete for the onboarding request.",
+        },
+        {
+          name: "department",
+          displayName: "Department",
+          type: "Choice",
+          required: true,
+          description: "Responsible team such as IT, HR, or Facilities.",
+        },
+        {
+          name: "taskStatus",
+          displayName: "Task Status",
+          type: "Choice",
+          required: true,
+          description: "Not Started, In Progress, Blocked, Complete.",
+        },
+      ],
+      relationships: [
+        {
+          target: "Onboarding Request",
+          relationship: "Many onboarding tasks belong to one request.",
+        },
+      ],
+      keys: ["taskName", "department"],
+      auditingRecommendation:
+        "Track task assignment and completion changes for operational accountability.",
+    },
+  ],
+  powerAutomateFlows: [
+    {
+      name: "Notify IT of Approved Onboarding Request",
+      trigger: "When an onboarding request is approved in Dataverse.",
+      steps: [
+        "Validate request status and required employee details.",
+        "Create or update IT onboarding task records.",
+        "Send notification to the IT queue or team mailbox.",
+        "Write audit activity for notification outcome.",
+      ],
+      connectors: ["Dataverse", "Office 365 Outlook"],
+      errorHandling:
+        "Log failures to a monitored table and notify the platform support team.",
+      retryPolicy:
+        "Use bounded retries for transient connector failures and escalate after repeated failure.",
+      ownerRecommendation:
+        "Use a production service account or service principal where appropriate; do not leave the flow owned only by the maker.",
+    },
+  ],
+  securityRoles: [
+    {
+      name: "HR Onboarding Coordinator",
+      persona: "HR users who create and manage onboarding requests.",
+      tablePrivileges: [
+        "Onboarding Request: Create, Read, Update",
+        "Onboarding Task: Read, Update",
+      ],
+      notes: [
+        "Do not grant broad edit access to all users.",
+        "Apply least privilege and validate access in UAT.",
+      ],
+    },
+    {
+      name: "Department Task Contributor",
+      persona: "IT, Facilities, or other teams completing assigned tasks.",
+      tablePrivileges: [
+        "Onboarding Request: Read",
+        "Onboarding Task: Read, Update",
+      ],
+      notes: [
+        "Limit updates to assigned task records where possible.",
+        "Avoid exposing sensitive HR-only fields.",
+      ],
+    },
+  ],
+  almPlan: {
+    environments: [
+      "Development environment for makers and configuration work.",
+      "Test/UAT environment for validation before production.",
+      "Production environment for live onboarding operations.",
+    ],
+    solutionStrategy: [
+      "Package the app, tables, flows, roles, and environment variables in a solution.",
+      "Use managed solutions for production deployment.",
+      "Do not manually recreate the app in production.",
+    ],
+    connectionReferences: [
+      "Create connection references for Dataverse and Outlook connectors.",
+      "Assign production-safe connection owners before enabling flows.",
+    ],
+    environmentVariables: [
+      "Store team mailbox, environment URLs, queue names, and feature flags as environment variables.",
+      "Set values per environment during deployment.",
+    ],
+    deploymentSteps: [
+      "Build and unit test in development.",
+      "Import managed solution to test/UAT and run role-based validation.",
+      "Approve release and import managed solution to production.",
+    ],
+    rollbackPlan: [
+      "Retain previous managed solution version.",
+      "Disable new flows if validation fails.",
+      "Restore previous solution version or deploy a forward fix.",
+    ],
+  },
+  licensingNotes: [
+    "Confirm Dataverse, Power Apps, and Power Automate licensing with the tenant licensing owner.",
+    "Do not estimate exact licensing prices without current tenant and Microsoft licensing context.",
+  ],
+  risks: [
+    {
+      severity: "High",
+      area: "Environment Strategy",
+      description:
+        "Building in the default environment creates governance, DLP, and lifecycle management risk.",
+      mitigation:
+        "Use dedicated development, test/UAT, and production environments with appropriate DLP policies.",
+    },
+    {
+      severity: "High",
+      area: "Security Model",
+      description:
+        "Giving all users edit access is not a least-privilege security model.",
+      mitigation:
+        "Define role-based access for HR, managers, IT, Facilities, and administrators.",
+    },
+    {
+      severity: "High",
+      area: "Data Architecture",
+      description:
+        "A SharePoint list is weak for relational, auditable onboarding data with multiple departments and status history.",
+      mitigation:
+        "Use Dataverse tables with relationships, auditing, ownership, and security roles.",
+    },
+    {
+      severity: "Medium",
+      area: "Flow Ownership",
+      description:
+        "A flow owned by the maker can break if the maker leaves or loses connector access.",
+      mitigation:
+        "Use service-owned production connections and documented support ownership.",
+    },
+    {
+      severity: "High",
+      area: "ALM",
+      description:
+        "No test environment, managed solution strategy, rollback plan, connection references, or environment variables are planned.",
+      mitigation:
+        "Adopt a solution-based ALM process with UAT, managed deployments, connection references, environment variables, and rollback steps.",
+    },
+    {
+      severity: "Medium",
+      area: "Audit Strategy",
+      description:
+        "The design does not describe how onboarding changes, approvals, or notifications will be audited.",
+      mitigation:
+        "Enable Dataverse auditing and define audit retention and review procedures.",
+    },
+  ],
+  readinessScore: {
+    total: 42,
+    accuracy: 58,
+    security: 30,
+    alm: 25,
+    scalability: 45,
+    usability: 55,
+    notes: [
+      "The design is not production ready.",
+      "Human solution architect, platform admin, and security owner review is required.",
+      "Production readiness cannot be claimed until ALM, security, data, and operations gaps are resolved.",
+    ],
+  },
+  architectureDiagramMermaid: `flowchart LR
+    Maker[Maker-owned Canvas App] --> SharePoint[SharePoint List]
+    SharePoint --> Flow[Maker-owned Power Automate Flow]
+    Flow --> IT[Email to IT]
+    Reviewer[Review Finding] --> Dataverse[Recommended Dataverse Model]
+    Dataverse --> ModelDriven[Recommended Model-driven App]
+    Dataverse --> ManagedSolution[Managed Solution ALM]`,
+  implementationChecklist: [
+    "Create dedicated development, test/UAT, and production environments.",
+    "Replace SharePoint list storage with Dataverse tables for onboarding request and task data.",
+    "Define least-privilege security roles.",
+    "Package app, tables, flows, and roles in a solution.",
+    "Add connection references and environment variables.",
+    "Define rollback plan and audit strategy before production deployment.",
+  ],
+  followUpQuestions: [
+    "Which user groups need create, read, update, and administrative access?",
+    "What onboarding data must be audited or retained?",
+    "Which environments and DLP policies are available for this solution?",
+    "Who will own production flows and connector connections?",
+  ],
+  reviewFindings: [
+    {
+      severity: "High",
+      category: "Default Environment",
+      finding:
+        "The design proposes building in the default environment.",
+      whyItMatters:
+        "Default environments are not appropriate for governed production ALM and can conflict with DLP and ownership controls.",
+      recommendation:
+        "Create dedicated development, test/UAT, and production environments.",
+    },
+    {
+      severity: "High",
+      category: "Security",
+      finding: "All users will have edit access.",
+      whyItMatters:
+        "Broad edit access can expose sensitive employee information and allow unauthorized changes.",
+      recommendation:
+        "Implement least-privilege Dataverse security roles and validate access before production.",
+    },
+    {
+      severity: "High",
+      category: "Data Platform",
+      finding:
+        "A SharePoint list is proposed for relational and auditable onboarding data.",
+      whyItMatters:
+        "SharePoint lists are limited for relational business data, role security, auditing, and complex process reporting.",
+      recommendation:
+        "Use Dataverse with related onboarding request, task, equipment, and audit tables.",
+    },
+    {
+      severity: "Medium",
+      category: "Flow Ownership",
+      finding: "The Power Automate flow will be owned by the maker.",
+      whyItMatters:
+        "Production flows can fail when a maker leaves, changes roles, or loses connector permissions.",
+      recommendation:
+        "Use service-owned production connections and documented operational ownership.",
+    },
+    {
+      severity: "High",
+      category: "Testing",
+      finding: "No test environment is planned.",
+      whyItMatters:
+        "Unvalidated changes can break production onboarding operations.",
+      recommendation:
+        "Add a test/UAT environment and require validation before production deployment.",
+    },
+    {
+      severity: "High",
+      category: "Managed Solutions",
+      finding: "The app will be manually recreated in production.",
+      whyItMatters:
+        "Manual recreation causes drift, missing dependencies, and repeatability failures.",
+      recommendation:
+        "Use managed solutions for production deployment.",
+    },
+    {
+      severity: "Medium",
+      category: "Rollback",
+      finding: "No rollback plan is included.",
+      whyItMatters:
+        "Failed deployments need a clear recovery path to reduce business disruption.",
+      recommendation:
+        "Retain previous managed solution versions and document rollback steps.",
+    },
+    {
+      severity: "Medium",
+      category: "Environment Configuration",
+      finding: "No environment variables are planned.",
+      whyItMatters:
+        "Hardcoded values create deployment drift and production configuration risk.",
+      recommendation:
+        "Use environment variables for URLs, mailbox addresses, queues, teams, and feature flags.",
+    },
+    {
+      severity: "Medium",
+      category: "Connection References",
+      finding: "No connection references are planned.",
+      whyItMatters:
+        "Connector ownership and deployment are harder to manage without explicit references.",
+      recommendation:
+        "Create connection references for Dataverse, Outlook, and any other connectors.",
+    },
+    {
+      severity: "High",
+      category: "Audit Strategy",
+      finding: "No audit strategy is described.",
+      whyItMatters:
+        "Onboarding processes often require traceability for approvals, status changes, and task completion.",
+      recommendation:
+        "Enable Dataverse auditing and define retention and review processes.",
+    },
+  ],
+  priorityFixes: [
+    {
+      priority: 1,
+      title: "Move to governed environments",
+      action:
+        "Create dedicated development, test/UAT, and production environments with DLP policies.",
+      expectedImpact:
+        "Reduces governance risk and enables controlled validation before production.",
+    },
+    {
+      priority: 2,
+      title: "Replace SharePoint list with Dataverse",
+      action:
+        "Model onboarding requests, tasks, relationships, and audit requirements in Dataverse.",
+      expectedImpact:
+        "Improves relational data integrity, security, auditability, and reporting.",
+    },
+    {
+      priority: 3,
+      title: "Implement least-privilege security",
+      action:
+        "Define security roles for HR, managers, IT, Facilities, and admins.",
+      expectedImpact:
+        "Reduces unauthorized data exposure and accidental process changes.",
+    },
+    {
+      priority: 4,
+      title: "Adopt solution-based ALM",
+      action:
+        "Package components in a solution, deploy managed to production, and define rollback.",
+      expectedImpact:
+        "Reduces deployment drift and improves supportability.",
+    },
+  ],
+  originalDesignSummary:
+    "The original design proposes an onboarding canvas app in the default environment using a SharePoint list, broad edit access, a maker-owned email flow, no test environment, and manual production recreation.",
+});

@@ -1,126 +1,178 @@
 # Judging Checklist
 
-Use this checklist when evaluating the Power Platform Solution Architect Agent for the Microsoft Agents League Creative Apps hackathon.
+Use this checklist to map **Power Platform Architect Agent** to Microsoft Agents League hackathon judging categories.
 
-## Innovation & Creativity (25 points)
+## Accuracy and Relevance
 
-- [ ] **Solves a real problem**: Saves architects time converting requirements to blueprints
-- [ ] **Novel application of AI**: Uses LLMs to generate structured Power Platform designs
-- [ ] **Leverages agents framework**: Uses Microsoft Agent Framework capabilities
-- [ ] **Unique value prop**: No existing tool does plain-language → architectural blueprint conversion
-- [ ] **Extensibility**: Can be extended with additional design patterns, templates, or industries
+Features that support this category:
 
-**Notes:**
+- Uses Power Platform-specific architecture prompts for both generation and review.
+- Produces relevant Power Platform outputs:
+  - recommended app type
+  - Dataverse schema
+  - Power Automate flows
+  - security roles
+  - ALM plan
+  - licensing notes
+  - risks
+  - readiness score
+  - Mermaid architecture diagram
+  - implementation checklist
+  - follow-up discovery questions
+- Prefers Dataverse for relational, auditable, role-secured business data.
+- Recommends model-driven apps for process-heavy data-centric scenarios.
+- Recommends canvas apps for tailored task experiences.
+- Recommends Power Pages only when external users need access.
+- Uses accurate terminology such as Dataverse, managed solutions, connection references, environment variables, Power Automate, and ALM.
+- Validates AI responses with Zod schemas before rendering results.
+- Uses structured JSON schema output for predictable result shape.
 
----
+Demo evidence:
 
-## User Experience (20 points)
+- [ ] Generate an employee onboarding blueprint.
+- [ ] Show Dataverse, Flows, Security, ALM, Risks, and Architecture tabs.
+- [ ] Show exported Markdown or JSON containing the same structured sections.
 
-- [ ] **Intuitive interface**: Business users can input requirements without training
-- [ ] **Clear information hierarchy**: Results organized logically (overview → details → export)
-- [ ] **Professional polish**: Polished, enterprise-grade appearance
-- [ ] **Responsive design**: Works on mobile, tablet, and desktop
-- [ ] **Loading states**: Clear feedback during processing
-- [ ] **Error handling**: Graceful error messages and recovery paths
+## Reasoning and Multi-Step Thinking
 
-**Notes:**
+Features that support this category:
 
----
+- Converts a single requirement into multiple coordinated architecture layers.
+- Chains solution reasoning across:
+  - business process
+  - data model
+  - automation
+  - security
+  - ALM
+  - licensing uncertainty
+  - risks
+  - readiness scoring
+- Review Board mode evaluates an existing design across multiple dimensions:
+  - data model quality
+  - Dataverse suitability
+  - security model
+  - environment strategy
+  - ALM strategy
+  - Power Automate reliability
+  - connection ownership
+  - scalability
+  - maintainability
+  - production readiness
+- Priority fixes are ordered and action-oriented.
+- Follow-up discovery questions identify missing information needed before implementation.
+- Readiness score includes category scores for accuracy, security, ALM, scalability, and usability.
 
-## Technical Excellence (20 points)
+Demo evidence:
 
-- [ ] **Clean code**: TypeScript, proper component separation, no technical debt
-- [ ] **Best practices**: React patterns, accessibility, security considerations
-- [ ] **Performance**: Fast load times, efficient rendering, proper optimization
-- [ ] **Maintainability**: Clear structure, documented code, easy to extend
-- [ ] **Testing**: Unit tests for critical logic (future: integration/E2E)
-- [ ] **Modern stack**: Next.js 15, React 19, Tailwind CSS, TypeScript
+- [ ] Paste the weak onboarding design into Solution Review Board mode.
+- [ ] Show high-severity findings and top priority fixes.
+- [ ] Explain how the review moves from design gap to mitigation and expected impact.
 
-**Notes:**
+## Creativity and Originality
 
----
+Features that support this category:
 
-## Power Platform Knowledge (20 points)
+- Combines architecture generation and solution review in one workflow.
+- Uses AI to produce a complete Power Platform architecture packet from natural language.
+- Adds a Solution Review Board persona to critique weak designs, not just generate new ones.
+- Converts AI output into an interactive multi-tab dashboard rather than static text.
+- Generates Mermaid architecture diagrams from the same structured result.
+- Provides export-ready Markdown, JSON, and Mermaid source for team handoff.
+- Adds production-readiness scoring to make architectural maturity visible.
+- Uses mock fallback mode so the demo remains usable even without Azure OpenAI configuration.
 
-- [ ] **Accurate terminology**: Uses "Dataverse," "Model-driven app," "Power Automate," etc.
-- [ ] **Best practices**: Reflects Microsoft recommendations for governance, security, ALM
-- [ ] **Real-world applicability**: Designs could actually be implemented
-- [ ] **Comprehensive coverage**: Addresses data, flows, security, ALM, risks
-- [ ] **Risk awareness**: Appropriately flags licensing, performance, and operational concerns
-- [ ] **Security-first thinking**: Recommends security roles, data access controls
+Demo evidence:
 
-**Notes:**
+- [ ] Switch between Generate Architecture and Solution Review Board modes.
+- [ ] Show Mermaid diagram rendering and Copy Mermaid.
+- [ ] Show Copy Markdown / Download JSON export flow.
 
----
+## User Experience and Presentation
 
-## Business Value (15 points)
+Features that support this category:
 
-- [ ] **Time savings**: Clearly saves 2-3 hours per design
-- [ ] **Consistency**: Ensures all designs follow best practices
-- [ ] **Democratization**: Enables non-architects to design solutions
-- [ ] **Documentation**: Exportable blueprints improve governance and handoff
-- [ ] **ROI clear**: Cost of tool is offset by efficiency gains
-- [ ] **Scalability**: Can be deployed enterprise-wide
+- Polished enterprise-ready landing page for a hackathon demo.
+- Clear two-mode selector:
+  - Generate Architecture
+  - Solution Review Board
+- Mode-specific textarea labels, placeholders, examples, and submit buttons.
+- Professional dashboard with clear tab hierarchy.
+- Review tab appears only when review findings or priority fixes exist.
+- Security tab renders privileges in a readable allowed/restricted matrix.
+- High severity risks and review findings are visually prominent.
+- Loading state explains what the app is checking.
+- Friendly error state avoids crashes and guides retry/demo fallback.
+- Empty state explains how to get started.
+- Demo Mode badge explains when mock fallback is active.
+- Responsible AI notice is visible below the dashboard.
+- Mobile-responsive layout with horizontal tab scrolling.
 
-**Notes:**
+Demo evidence:
 
----
+- [ ] Show the first viewport on desktop.
+- [ ] Resize or use mobile viewport to show responsive behavior.
+- [ ] Trigger demo fallback and show the Demo Mode badge.
+- [ ] Show loading and error behavior if possible.
 
-## Presentation (5-10 bonus points)
+## Reliability and Safety
 
-- [ ] **Demo clarity**: Presenter clearly explains the problem and solution
-- [ ] **Live demo execution**: Smooth, no crashes, confident navigation
-- [ ] **Alignment with requirements**: Addresses all judging criteria
-- [ ] **Enthusiasm**: Presenter is genuinely excited about the tool
-- [ ] **Time management**: Stays within time limits, doesn't rush
+Features that support this category:
 
-**Notes:**
+- Input validation blocks empty or too-short requirements.
+- Server API routes never expose the Azure OpenAI API key.
+- API error messages sanitize possible API key values.
+- Missing Azure OpenAI env vars fall back to known-good mock results.
+- Mock results are parsed through schemas before use.
+- AI outputs are parsed as JSON and validated before rendering.
+- Review and architecture results have separate schemas.
+- The app uses type-safe child schemas for tables, flows, roles, ALM, risks, readiness score, findings, and priority fixes.
+- Responsible AI prompt instructions prevent claims of guaranteed production readiness.
+- Prompts instruct the model not to invent exact licensing prices.
+- UI explicitly states that human validation is required before production use.
+- Tests cover schemas, validation helpers, mock result validity, and Markdown export.
+- Lint, typecheck, test, and production build commands are documented.
 
----
+Demo evidence:
 
-## Additional Scoring Notes
+- [ ] Show `npm test` passing.
+- [ ] Show `npm run typecheck` and `npm run lint` passing.
+- [ ] Explain schema validation and mock fallback behavior.
 
-### Strengths to Highlight
+## Community Value
 
-1. **Problem-solution fit**: Directly addresses architect workflow inefficiencies
-2. **AI integration**: Thoughtful use of LLMs for structured output generation
-3. **Enterprise readiness**: Professional design, security, governance considerations
-4. **Extensibility**: Obvious paths for features like Solution Review Board mode, industry templates
+Features that support this category:
 
-### Areas for Differentiation
+- Helps makers and analysts produce better initial solution designs.
+- Helps solution architects save time on first-pass documentation.
+- Helps Center of Excellence teams standardize review criteria.
+- Encourages least-privilege security and ALM discipline.
+- Provides exportable artifacts that teams can share in pull requests, design reviews, or project documentation.
+- Includes follow-up discovery questions to improve collaboration between business and technical stakeholders.
+- Includes transparent limitations and Responsible AI guidance.
+- README and architecture docs make the project easier for others to understand, run, and extend.
+- Future roadmap identifies practical paths for tenant-aware governance and Power Platform CLI integration.
 
-1. **Mermaid diagrams**: Automatic architecture visualization
-2. **Production readiness scoring**: Quantifies solution maturity
-3. **Risk flagging**: Proactively identifies licensing, performance, security issues
-4. **Export flexibility**: Markdown for humans, JSON for integrations
+Demo evidence:
 
-### Red Flags to Avoid
+- [ ] Show README setup instructions.
+- [ ] Show architecture documentation.
+- [ ] Explain how another team could adapt prompts, schemas, or review categories.
 
-- Hardcoded secrets (API keys, connection strings)
-- Insufficient error handling
-- No placeholder for AI integration
-- Non-responsive UI
-- Poor accessibility (low contrast, missing alt text)
-- Terminology errors in Power Platform design
+## Submission Readiness Checklist
 
----
-
-## Final Scoring
-
-| Category                 | Points  | Score  |
-| ------------------------ | ------- | ------ |
-| Innovation & Creativity  | 25      | \_\_\_ |
-| User Experience          | 20      | \_\_\_ |
-| Technical Excellence     | 20      | \_\_\_ |
-| Power Platform Knowledge | 20      | \_\_\_ |
-| Business Value           | 15      | \_\_\_ |
-| Presentation             | 5-10    | \_\_\_ |
-| **Total**                | **100** | \_\_\_ |
-
----
-
-## Reviewer Signature
-
-**Reviewer Name:** **********\_\_\_\_**********  
-**Date:** **********\_\_\_\_**********  
-**Comments:**
+- [ ] README is complete.
+- [ ] Architecture doc is complete.
+- [ ] Judging checklist is complete.
+- [ ] App runs locally with `npm run dev`.
+- [ ] `npm run lint` passes.
+- [ ] `npm run typecheck` passes.
+- [ ] `npm test` passes.
+- [ ] `npm run build` passes.
+- [ ] Azure OpenAI environment variables are documented.
+- [ ] Demo fallback works when Azure OpenAI is not configured.
+- [ ] Generate Architecture mode works.
+- [ ] Solution Review Board mode works.
+- [ ] Export panel works.
+- [ ] Responsible AI notice is visible.
+- [ ] Demo screenshots are added.
+- [ ] Demo video link is added.

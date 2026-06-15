@@ -56,6 +56,21 @@ export const RiskSchema = z.object({
   mitigation: z.string().min(1),
 });
 
+export const ReviewFindingSchema = z.object({
+  severity: z.enum(["High", "Medium", "Low"]),
+  category: z.string().min(1),
+  finding: z.string().min(1),
+  whyItMatters: z.string().min(1),
+  recommendation: z.string().min(1),
+});
+
+export const PriorityFixSchema = z.object({
+  priority: z.number().int().min(1),
+  title: z.string().min(1),
+  action: z.string().min(1),
+  expectedImpact: z.string().min(1),
+});
+
 export const ReadinessScoreSchema = z.object({
   total: z.number().int().min(0).max(100),
   accuracy: z.number().int().min(0).max(100),
@@ -103,6 +118,12 @@ export const SolutionArchitectureResultSchema = z.object({
   followUpQuestions: z.array(z.string().min(1)).default([]),
 });
 
+export const ReviewResultSchema = SolutionArchitectureResultSchema.extend({
+  reviewFindings: z.array(ReviewFindingSchema).default([]),
+  priorityFixes: z.array(PriorityFixSchema).default([]),
+  originalDesignSummary: z.string().min(1),
+});
+
 export type Column = z.infer<typeof ColumnSchema>;
 export type Relationship = z.infer<typeof RelationshipSchema>;
 export type DataverseTable = z.infer<typeof DataverseTableSchema>;
@@ -110,9 +131,12 @@ export type Flow = z.infer<typeof FlowSchema>;
 export type SecurityRole = z.infer<typeof SecurityRoleSchema>;
 export type ALMPlan = z.infer<typeof ALMPlanSchema>;
 export type Risk = z.infer<typeof RiskSchema>;
+export type ReviewFinding = z.infer<typeof ReviewFindingSchema>;
+export type PriorityFix = z.infer<typeof PriorityFixSchema>;
 export type ReadinessScore = z.infer<typeof ReadinessScoreSchema>;
 export type RecommendedAppType = z.infer<typeof RecommendedAppTypeSchema>;
 export type DetectedPattern = z.infer<typeof DetectedPatternSchema>;
 export type SolutionArchitectureResult = z.infer<
   typeof SolutionArchitectureResultSchema
 >;
+export type ReviewResult = z.infer<typeof ReviewResultSchema>;

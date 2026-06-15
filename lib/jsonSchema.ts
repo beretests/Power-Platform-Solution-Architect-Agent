@@ -1,5 +1,8 @@
 import { zodToJsonSchema } from "zod-to-json-schema";
-import { SolutionArchitectureResultSchema } from "./schemas";
+import {
+  ReviewResultSchema,
+  SolutionArchitectureResultSchema,
+} from "./schemas";
 
 type JsonSchema = {
   type?: string;
@@ -98,6 +101,27 @@ const riskJsonSchema = strictObject({
   mitigation: stringSchema,
 });
 
+const reviewFindingJsonSchema = strictObject({
+  severity: {
+    type: "string",
+    enum: ["High", "Medium", "Low"],
+  },
+  category: stringSchema,
+  finding: stringSchema,
+  whyItMatters: stringSchema,
+  recommendation: stringSchema,
+});
+
+const priorityFixJsonSchema = strictObject({
+  priority: {
+    type: "number",
+    minimum: 1,
+  },
+  title: stringSchema,
+  action: stringSchema,
+  expectedImpact: stringSchema,
+});
+
 const readinessScoreJsonSchema = strictObject({
   total: scoreSchema,
   accuracy: scoreSchema,
@@ -161,6 +185,23 @@ const manualSolutionArchitectureJsonSchema = strictObject({
   followUpQuestions: stringArraySchema,
 });
 
+const manualReviewResultJsonSchema = strictObject({
+  ...manualSolutionArchitectureJsonSchema.properties,
+  mode: {
+    type: "string",
+    enum: ["review"],
+  },
+  reviewFindings: {
+    type: "array",
+    items: reviewFindingJsonSchema,
+  },
+  priorityFixes: {
+    type: "array",
+    items: priorityFixJsonSchema,
+  },
+  originalDesignSummary: stringSchema,
+});
+
 const convertedSolutionArchitectureJsonSchema = zodToJsonSchema(
   SolutionArchitectureResultSchema as unknown as Parameters<
     typeof zodToJsonSchema
@@ -168,6 +209,14 @@ const convertedSolutionArchitectureJsonSchema = zodToJsonSchema(
   {
     $refStrategy: "none",
     name: "SolutionArchitectureResult",
+  },
+);
+
+const convertedReviewResultJsonSchema = zodToJsonSchema(
+  ReviewResultSchema as unknown as Parameters<typeof zodToJsonSchema>[0],
+  {
+    $refStrategy: "none",
+    name: "ReviewResult",
   },
 );
 
@@ -186,3 +235,9 @@ export const solutionArchitectureJsonSchema = hasUsableConvertedSchema(
 )
   ? convertedSolutionArchitectureJsonSchema
   : manualSolutionArchitectureJsonSchema;
+
+export const reviewResultJsonSchema = hasUsableConvertedSchema(
+  convertedReviewResultJsonSchema,
+)
+  ? convertedReviewResultJsonSchema
+  : manualReviewResultJsonSchema;

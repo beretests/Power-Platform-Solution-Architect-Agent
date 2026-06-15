@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { SecurityRole } from "@/lib/schemas";
+import { type SecurityRole } from "@/lib/schemas";
 
 interface SecurityModelViewProps {
   roles?: SecurityRole[];
@@ -15,20 +15,43 @@ const getPrivilegeValue = (
   privileges: string[],
   privilege: Privilege,
 ) => {
-  return privileges.some(
-    (item) => item.toLowerCase() === privilege.toLowerCase(),
-  );
+  const privilegePattern = new RegExp(`\\b${privilege}\\b`, "i");
+
+  return privileges.some((item) => privilegePattern.test(item));
 };
 
+const extractPrivileges = (value: string) =>
+  privilegeLabels.filter((privilege) =>
+    new RegExp(`\\b${privilege}\\b`, "i").test(value),
+  );
+
+const removeLeadingPrivilegeText = (value: string) =>
+  value
+    .replace(
+      /^(create|read|update|delete)(\s*(,|\/|&|and|or)\s*(create|read|update|delete))*\s+/i,
+      "",
+    )
+    .trim();
+
 const parseTablePrivilege = (value: string) => {
-  const [table, privilegeText = ""] = value.split(":");
+  const [rawTable, ...privilegeParts] = value.split(":");
+  const hasExplicitTable = privilegeParts.length > 0;
+  const privilegeText = hasExplicitTable ? privilegeParts.join(":") : value;
+  const table = hasExplicitTable
+    ? rawTable.trim()
+    : removeLeadingPrivilegeText(value);
+  const privilegePhrases = privilegeText
+    .split(",")
+    .map((privilege) => privilege.trim())
+    .filter(Boolean);
+  const privileges = [...new Set([
+    ...extractPrivileges(privilegeText),
+    ...privilegePhrases,
+  ])];
 
   return {
-    table: table.trim(),
-    privileges: privilegeText
-      .split(",")
-      .map((privilege) => privilege.trim())
-      .filter(Boolean),
+    table: table || value.trim(),
+    privileges,
   };
 };
 

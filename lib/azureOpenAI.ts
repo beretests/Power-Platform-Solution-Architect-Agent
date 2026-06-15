@@ -1,9 +1,17 @@
-import { getMockArchitectureResult } from "./mockResults";
-import { architectSystemPrompt } from "./prompts";
-import { solutionArchitectureJsonSchema } from "./jsonSchema";
 import {
-  SolutionArchitectureResult,
+  getMockArchitectureResult,
+  getMockReviewResult,
+} from "./mockResults";
+import {
+  reviewResultJsonSchema,
+  solutionArchitectureJsonSchema,
+} from "./jsonSchema";
+import { architectSystemPrompt, reviewSystemPrompt } from "./prompts";
+import {
+  ReviewResultSchema,
   SolutionArchitectureResultSchema,
+  type ReviewResult,
+  type SolutionArchitectureResult,
 } from "./schemas";
 
 interface AzureOpenAIMessage {
@@ -69,15 +77,35 @@ const validateArchitectureResult = (
   return result.data;
 };
 
-export const generateArchitecture = async (
-  requirement: string,
-): Promise<SolutionArchitectureResult> => {
-  const env = getEnv();
+const validateReviewResult = (data: unknown): ReviewResult => {
+  const result = ReviewResultSchema.safeParse(data);
 
-  if (!env) {
-    return getMockArchitectureResult();
+  if (!result.success) {
+    const details = result.error.issues
+      .map((issue) => `${issue.path.join(".") || "root"}: ${issue.message}`)
+      .join("; ");
+
+    throw new Error(
+      `Azure OpenAI review response failed schema validation: ${details}`,
+    );
   }
 
+  return result.data;
+};
+
+const requestStructuredOutput = async ({
+  env,
+  systemPrompt,
+  userContent,
+  schemaName,
+  schema,
+}: {
+  env: NonNullable<ReturnType<typeof getEnv>>;
+  systemPrompt: string;
+  userContent: string;
+  schemaName: string;
+  schema: unknown;
+}): Promise<unknown> => {
   const response = await fetch(`${env.baseUrl}/chat/completions`, {
     method: "POST",
     headers: {
@@ -89,19 +117,19 @@ export const generateArchitecture = async (
       messages: [
         {
           role: "system",
-          content: architectSystemPrompt,
+          content: systemPrompt,
         },
         {
           role: "user",
-          content: requirement,
+          content: userContent,
         },
       ],
       response_format: {
         type: "json_schema",
         json_schema: {
-          name: "SolutionArchitectureResult",
+          name: schemaName,
           strict: true,
-          schema: solutionArchitectureJsonSchema,
+          schema,
         },
       },
     }),
@@ -128,7 +156,45 @@ export const generateArchitecture = async (
     throw new Error("Azure OpenAI returned an empty response.");
   }
 
-  const parsedContent = parseJsonObject(content);
+  return parseJsonObject(content);
+};
+
+export const generateArchitecture = async (
+  requirement: string,
+): Promise<SolutionArchitectureResult> => {
+  const env = getEnv();
+
+  if (!env) {
+    return getMockArchitectureResult();
+  }
+
+  const parsedContent = await requestStructuredOutput({
+    env,
+    systemPrompt: architectSystemPrompt,
+    userContent: requirement,
+    schemaName: "SolutionArchitectureResult",
+    schema: solutionArchitectureJsonSchema,
+  });
 
   return validateArchitectureResult(parsedContent);
+};
+
+export const generateReview = async (
+  designText: string,
+): Promise<ReviewResult> => {
+  const env = getEnv();
+
+  if (!env) {
+    return getMockReviewResult();
+  }
+
+  const parsedContent = await requestStructuredOutput({
+    env,
+    systemPrompt: reviewSystemPrompt,
+    userContent: designText,
+    schemaName: "ReviewResult",
+    schema: reviewResultJsonSchema,
+  });
+
+  return validateReviewResult(parsedContent);
 };

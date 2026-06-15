@@ -90,3 +90,26 @@ Flag ALM risks.
 Prefer conservative recommendations.
 Do not hardcode secrets.
 Validate AI output before rendering.
+
+# Foundry IQ grounding
+
+The app must use Foundry IQ as the grounding layer for Power Platform architecture guidance.
+
+Foundry IQ should be used to retrieve curated knowledge before generating architecture or review results.
+
+The app should support:
+- Foundry IQ knowledge base retrieval
+- Local mock fallback when Foundry IQ is not configured
+- Grounding source display in the UI
+- Grounding source export in Markdown and JSON
+
+Use these environment variables:
+- FOUNDRY_IQ_ENABLED
+- FOUNDRY_IQ_SEARCH_ENDPOINT
+- FOUNDRY_IQ_KNOWLEDGE_BASE
+- FOUNDRY_IQ_API_VERSION
+- FOUNDRY_IQ_AUTH_MODE
+- AZURE_SEARCH_API_KEY, optional local fallback only
+
+Do not expose Foundry IQ or Azure OpenAI keys to the browser.
+Do not use NEXT_PUBLIC_ for secrets.
