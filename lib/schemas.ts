@@ -87,6 +87,21 @@ export const RecommendedAppTypeSchema = z.object({
   alternatives: z.array(z.string().min(1)).default([]),
 });
 
+export const GroundingModeSchema = z.enum([
+  "foundry-iq",
+  "local-fallback",
+  "mock",
+  "none",
+]);
+
+export const GroundingSourceSchema = z.object({
+  sourceType: z.enum(["Foundry IQ", "Local Knowledge", "Mock", "None"]),
+  title: z.string().min(1),
+  reference: z.string().min(1),
+  excerpt: z.string().min(1).optional(),
+  usedFor: z.string().min(1),
+});
+
 export const DetectedPatternSchema = z.enum([
   "case-management",
   "approval-workflow",
@@ -116,6 +131,8 @@ export const SolutionArchitectureResultSchema = z.object({
   architectureDiagramMermaid: z.string().min(1),
   implementationChecklist: z.array(z.string().min(1)).default([]),
   followUpQuestions: z.array(z.string().min(1)).default([]),
+  groundingMode: GroundingModeSchema,
+  groundingSources: z.array(GroundingSourceSchema).default([]),
 });
 
 export const ReviewResultSchema = SolutionArchitectureResultSchema.extend({
@@ -135,6 +152,8 @@ export type ReviewFinding = z.infer<typeof ReviewFindingSchema>;
 export type PriorityFix = z.infer<typeof PriorityFixSchema>;
 export type ReadinessScore = z.infer<typeof ReadinessScoreSchema>;
 export type RecommendedAppType = z.infer<typeof RecommendedAppTypeSchema>;
+export type GroundingMode = z.infer<typeof GroundingModeSchema>;
+export type GroundingSource = z.infer<typeof GroundingSourceSchema>;
 export type DetectedPattern = z.infer<typeof DetectedPatternSchema>;
 export type SolutionArchitectureResult = z.infer<
   typeof SolutionArchitectureResultSchema

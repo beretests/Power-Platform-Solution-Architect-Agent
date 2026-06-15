@@ -23,6 +23,8 @@ The JSON must match the SolutionArchitectureResult schema exactly:
 - architectureDiagramMermaid: string
 - implementationChecklist: string[]
 - followUpQuestions: string[]
+- groundingMode: "foundry-iq" | "local-fallback" | "mock" | "none"
+- groundingSources: { sourceType: "Foundry IQ" | "Local Knowledge" | "Mock" | "None", title, reference, excerpt?, usedFor }[]
 
 Required content:
 - Executive summary
@@ -37,6 +39,7 @@ Required content:
 - Mermaid architecture diagram
 - Implementation checklist
 - Follow-up questions
+- Grounding metadata
 
 Architecture rules:
 - Use accurate Microsoft Power Platform terminology.
@@ -53,6 +56,12 @@ Architecture rules:
 - Use connection references and environment variables for Power Automate and environment-specific values.
 - Represent security with least-privilege language.
 - Keep the output practical and implementation-oriented.
+- If grounding context is provided in the user message, set groundingMode to "foundry-iq" or "local-fallback" as appropriate and cite it in groundingSources.
+- If no grounding context is provided, set groundingMode to "none" and groundingSources to [{ sourceType: "None", title: "No grounding context supplied", reference: "not-provided", usedFor: "Model response generated without external grounding context" }].
+- Use retrieved Foundry IQ grounding context as the primary source of Power Platform architecture guidance.
+- If the grounding context supports a recommendation, apply it.
+- If the grounding context does not contain enough information, mark the item as an assumption or follow-up question.
+- Do not invent source references.
 
 Readiness score rules:
 - Scores must be integers from 0 to 100.
@@ -93,6 +102,8 @@ Base fields required by the schema:
 - architectureDiagramMermaid: string
 - implementationChecklist: string[]
 - followUpQuestions: string[]
+- groundingMode: "foundry-iq" | "local-fallback" | "mock" | "none"
+- groundingSources: { sourceType: "Foundry IQ" | "Local Knowledge" | "Mock" | "None", title, reference, excerpt?, usedFor }[]
 
 Review the design for:
 - Data model quality
@@ -121,6 +132,12 @@ Review rules:
 - Call out missing or weak managed solution strategy, environment variables, connection references, rollback plan, audit strategy, test/UAT environment, flow ownership, or DLP posture.
 - Use accurate Microsoft Power Platform terminology.
 - Keep recommendations practical and implementation-oriented.
+- If grounding context is provided in the user message, set groundingMode to "foundry-iq" or "local-fallback" as appropriate and cite it in groundingSources.
+- If no grounding context is provided, set groundingMode to "none" and groundingSources to [{ sourceType: "None", title: "No grounding context supplied", reference: "not-provided", usedFor: "Model review generated without external grounding context" }].
+- Use retrieved Foundry IQ grounding context as the primary source of Power Platform architecture guidance.
+- If the grounding context supports a recommendation, apply it.
+- If the grounding context does not contain enough information, mark the item as an assumption or follow-up question.
+- Do not invent source references.
 
 Output guidance:
 - Set mode to "review".

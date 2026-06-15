@@ -28,4 +28,15 @@ describe("exportToMarkdown", () => {
     expect(markdown).toContain("### Environments");
     expect(markdown).toContain("### Solution Strategy");
   });
+
+  it("includes grounding details", () => {
+    const source = blueprint.groundingSources[0];
+
+    expect(markdown).toContain("## Grounding");
+    expect(markdown).toContain(`Grounding mode: ${blueprint.groundingMode}`);
+    expect(markdown).toContain(`### ${source.title}`);
+    expect(markdown).toContain(`- Source type: ${source.sourceType}`);
+    expect(markdown).toContain(`- Reference: ${source.reference}`);
+    expect(markdown).toContain(`- Used for: ${source.usedFor}`);
+  });
 });

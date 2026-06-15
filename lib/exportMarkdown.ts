@@ -79,6 +79,30 @@ export const exportToMarkdown = (
   lines.push(addList(blueprint.assumptions));
   lines.push("");
 
+  lines.push("## Grounding");
+  lines.push("");
+  lines.push(`Grounding mode: ${blueprint.groundingMode}`);
+  lines.push("");
+
+  if (blueprint.groundingSources.length === 0) {
+    lines.push("- No grounding sources specified");
+    lines.push("");
+  } else {
+    blueprint.groundingSources.forEach((source) => {
+      lines.push(`### ${source.title}`);
+      lines.push("");
+      lines.push(`- Source type: ${source.sourceType}`);
+      lines.push(`- Reference: ${source.reference}`);
+      lines.push(`- Used for: ${source.usedFor}`);
+
+      if (source.excerpt) {
+        lines.push(`- Excerpt: ${source.excerpt}`);
+      }
+
+      lines.push("");
+    });
+  }
+
   lines.push("## Dataverse Tables");
   lines.push("");
   blueprint.dataverseTables.forEach((table) => {

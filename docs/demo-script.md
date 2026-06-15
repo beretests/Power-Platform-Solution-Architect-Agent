@@ -2,7 +2,7 @@
 
 ## Overview
 
-This demo script showcases the Power Platform Solution Architect Agent converting plain-language business requirements into implementation-ready solution blueprints.
+This demo script showcases the Power Platform Solution Architect Agent converting plain-language business requirements into implementation-ready solution blueprints using Azure OpenAI and Foundry IQ grounding.
 
 **Duration:** 8-10 minutes
 
@@ -12,12 +12,13 @@ This demo script showcases the Power Platform Solution Architect Agent convertin
 
 ### 1. Introduction (1 min)
 
-"Today we're looking at the Power Platform Solution Architect Agent—a tool that helps business analysts and solution architects rapidly convert business requirements into detailed, production-ready Power Platform blueprints."
+"Today we're looking at the Power Platform Solution Architect Agent—a tool that helps business analysts and solution architects rapidly convert business requirements into detailed Power Platform blueprints grounded in a curated Foundry IQ knowledge base."
 
 **Key Points:**
 
 - Saves architects 2-3 hours of manual design work
 - Ensures consistent best practices
+- Uses Foundry IQ or local knowledge grounding for Power Platform guidance
 - Flags risks early
 - Generates exportable documentation
 
@@ -51,7 +52,8 @@ We need audit trails for all price changes.
 - Security role recommendations
 - ALM strategy
 - Risk assessment
-- Production readiness score"
+- Production readiness score
+- Grounding sources and source references"
 
 ### 4. Blueprint Generation (3-4 min)
 
@@ -104,6 +106,12 @@ We need audit trails for all price changes.
 - "This blueprint scores **65/100** on production readiness"
 - Highlight improvement areas
 
+#### Grounding Tab
+
+- "The Grounding tab shows whether this result was grounded by Foundry IQ, local fallback knowledge, or mock data"
+- Show source title, source type, reference, and used-for details
+- Explain that recommendations should be treated as assumptions or follow-up questions when grounding is incomplete
+
 #### Architecture Diagram
 
 - "The Mermaid diagram shows the solution topology"
@@ -115,6 +123,7 @@ We need audit trails for all price changes.
 
 - Click "Export as Markdown" to get a detailed design document
 - Click "Export as JSON" to integrate with development tools
+- Point out that Markdown includes the grounding section and source references
 
 **Use Cases:**
 
@@ -131,6 +140,7 @@ We need audit trails for all price changes.
 
 - ✅ **Speed:** From hours to minutes
 - ✅ **Consistency:** Follows Microsoft best practices
+- ✅ **Grounding:** Uses Foundry IQ or local knowledge sources as the primary guidance source
 - ✅ **Risk Awareness:** Flags licensing, performance, and security concerns
 - ✅ **Documentation:** Exportable blueprints for governance
 - ✅ **Accessibility:** Non-architects can design solutions
@@ -140,16 +150,18 @@ We need audit trails for all price changes.
 - Plain-language requirement input
 - Multi-tab result dashboard
 - Real-time architecture diagram generation
+- Foundry IQ grounding source transparency
 - Production readiness scoring
 - Comprehensive risk assessment
 - Export in multiple formats
 
 ### Technology Stack
 
-- **Next.js 15+** (App Router, TypeScript)
+- **Next.js 16** (App Router, TypeScript)
 - **Tailwind CSS** (responsive design)
 - **Mermaid** (diagram generation)
-- **Azure OpenAI** (LLM backbone, added later)
+- **Azure OpenAI** (structured generation and review)
+- **Foundry IQ / Azure AI Search** (grounding knowledge base)
 - **Zod** (runtime validation)
 
 ---
@@ -160,7 +172,10 @@ We need audit trails for all price changes.
 A: No, it augments them. The agent generates the blueprint; architects validate, refine, and ensure organizational fit.
 
 **Q: How accurate are the recommendations?**
-A: Based on Microsoft best practices and common patterns. All recommendations should be reviewed by your governance team.
+A: Recommendations are grounded in the configured Foundry IQ knowledge base or local fallback guidance when available. All recommendations should still be reviewed by your governance team.
+
+**Q: What happens if Foundry IQ is not configured?**
+A: The app uses local markdown knowledge files as a grounding fallback. If Azure OpenAI itself is not configured, it uses mock demo data and shows the Demo Mode badge.
 
 **Q: Can we integrate this with our ALM process?**
 A: Yes! The JSON export is designed to integrate with CI/CD pipelines and solution deployment tools.
@@ -176,7 +191,7 @@ A: The UI flags assumptions and risks. All outputs should be validated before pr
 | ---------------------------- | -------------------------------------------------------- |
 | **Innovation**               | AI-driven architecture generation for low-code platforms |
 | **User Experience**          | Intuitive form → rich multi-tab dashboard                |
-| **Power Platform Knowledge** | Uses accurate terminology, follows best practices        |
+| **Power Platform Knowledge** | Foundry IQ grounding, accurate terminology, best practices |
 | **Code Quality**             | TypeScript, component-based, accessible                  |
 | **Business Value**           | Saves 2-3 hours per design, improves consistency         |
 

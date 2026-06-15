@@ -1351,6 +1351,48 @@ const formatPrivileges = (permission: TablePermission) => {
   }`;
 };
 
+const mockArchitectureGroundingSources = [
+  {
+    sourceType: "Mock" as const,
+    title: "Mock employee onboarding architecture sample",
+    reference: "lib/mockResults.ts",
+    excerpt:
+      "Demo architecture result grounded in local mock data for employee onboarding.",
+    usedFor:
+      "Provides a stable demo blueprint when Azure OpenAI or Foundry IQ grounding is not configured.",
+  },
+  {
+    sourceType: "Local Knowledge" as const,
+    title: "Power Platform Architecture Patterns",
+    reference: "knowledge/power-platform-patterns.md",
+    excerpt:
+      "Use model-driven apps for process-heavy, data-centric internal applications.",
+    usedFor:
+      "Supports the app type recommendation and Dataverse-first architecture guidance.",
+  },
+];
+
+const mockReviewGroundingSources = [
+  {
+    sourceType: "Mock" as const,
+    title: "Mock weak onboarding review sample",
+    reference: "lib/mockResults.ts",
+    excerpt:
+      "Demo review result grounded in a weak onboarding design for review board mode.",
+    usedFor:
+      "Provides stable review findings and priority fixes when Azure OpenAI or Foundry IQ grounding is not configured.",
+  },
+  {
+    sourceType: "Local Knowledge" as const,
+    title: "Solution Review Board Checklist",
+    reference: "knowledge/solution-review-board-checklist.md",
+    excerpt:
+      "Flag default environment, weak security, no managed solution strategy, and no rollback plan.",
+    usedFor:
+      "Supports review findings, priority fixes, and production readiness scoring.",
+  },
+];
+
 export const mockArchitectureResult: SolutionArchitectureResult = {
   id: mockEmployeeOnboardingBlueprint.id,
   createdAt: mockEmployeeOnboardingBlueprint.createdAt,
@@ -1460,6 +1502,8 @@ export const mockArchitectureResult: SolutionArchitectureResult = {
   followUpQuestions: mockEmployeeOnboardingBlueprint.followUpQuestions.map(
     (item) => item.question,
   ),
+  groundingMode: "mock",
+  groundingSources: mockArchitectureGroundingSources,
 };
 
 export const getMockArchitectureResult = (): SolutionArchitectureResult => {
@@ -1742,6 +1786,8 @@ export const getMockReviewResult = (): ReviewResult => ({
     "Which environments and DLP policies are available for this solution?",
     "Who will own production flows and connector connections?",
   ],
+  groundingMode: "mock",
+  groundingSources: mockReviewGroundingSources,
   reviewFindings: [
     {
       severity: "High",

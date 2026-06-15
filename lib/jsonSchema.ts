@@ -138,6 +138,17 @@ const recommendedAppTypeJsonSchema = strictObject({
   alternatives: stringArraySchema,
 });
 
+const groundingSourceJsonSchema = strictObject({
+  sourceType: {
+    type: "string",
+    enum: ["Foundry IQ", "Local Knowledge", "Mock", "None"],
+  },
+  title: stringSchema,
+  reference: stringSchema,
+  excerpt: stringSchema,
+  usedFor: stringSchema,
+});
+
 const manualSolutionArchitectureJsonSchema = strictObject({
   id: stringSchema,
   createdAt: stringSchema,
@@ -183,6 +194,14 @@ const manualSolutionArchitectureJsonSchema = strictObject({
   architectureDiagramMermaid: stringSchema,
   implementationChecklist: stringArraySchema,
   followUpQuestions: stringArraySchema,
+  groundingMode: {
+    type: "string",
+    enum: ["foundry-iq", "local-fallback", "mock", "none"],
+  },
+  groundingSources: {
+    type: "array",
+    items: groundingSourceJsonSchema,
+  },
 });
 
 const manualReviewResultJsonSchema = strictObject({

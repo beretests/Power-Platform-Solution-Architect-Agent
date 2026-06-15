@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import {
   Activity,
+  BookOpenCheck,
   Boxes,
   ClipboardList,
   Database,
@@ -30,6 +31,10 @@ import { ReadinessScore } from "./ReadinessScore";
 import { ExportPanel } from "./ExportPanel";
 import { ReviewFindingsView } from "./ReviewFindingsView";
 import { PriorityFixesView } from "./PriorityFixesView";
+import {
+  GroundingModeBadge,
+  GroundingSourcesView,
+} from "./GroundingSourcesView";
 
 interface ResultDashboardProps {
   blueprint?: SolutionArchitectureResult | ReviewResult;
@@ -39,6 +44,7 @@ interface ResultDashboardProps {
 type TabId =
   | "overview"
   | "review"
+  | "grounding"
   | "dataverse"
   | "flows"
   | "security"
@@ -127,6 +133,7 @@ export const ResultDashboard: React.FC<ResultDashboardProps> = ({
     ...(showReviewTab
       ? [{ id: "review" as const, label: "Review", icon: FileSearch }]
       : []),
+    { id: "grounding", label: "Grounding", icon: BookOpenCheck },
     { id: "dataverse", label: "Dataverse", icon: Database },
     { id: "flows", label: "Flows", icon: GitBranch },
     { id: "security", label: "Security", icon: ShieldCheck },
@@ -200,13 +207,19 @@ export const ResultDashboard: React.FC<ResultDashboardProps> = ({
 
             <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 px-4 py-3">
               <Gauge className="h-5 w-5 text-emerald-300" />
-              <div>
+              <div className="min-w-0">
                 <p className="text-xs uppercase tracking-wide text-slate-400">
                   Readiness
                 </p>
-                <p className="mt-1 text-sm font-semibold text-white">
-                  {blueprint.readinessScore.total}/100
-                </p>
+                <div className="mt-1 flex flex-col gap-2">
+                  <p className="text-sm font-semibold text-white">
+                    {blueprint.readinessScore.total}/100
+                  </p>
+                  <GroundingModeBadge
+                    groundingMode={blueprint.groundingMode}
+                    compact
+                  />
+                </div>
               </div>
             </div>
 
@@ -304,6 +317,26 @@ export const ResultDashboard: React.FC<ResultDashboardProps> = ({
                 </div>
                 <ReviewFindingsView findings={reviewFindings} />
               </section>
+            </div>
+          )}
+
+          {/* Grounding Tab */}
+          {activeTab === "grounding" && (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  Grounding
+                </h2>
+                <p className="text-gray-600 mb-6">
+                  {blueprint.groundingMode === "foundry-iq"
+                    ? "This result was grounded by Foundry IQ retrieval before Azure OpenAI generated the structured report."
+                    : "Grounding status and source references used for this result."}
+                </p>
+              </div>
+              <GroundingSourcesView
+                groundingMode={blueprint.groundingMode}
+                groundingSources={blueprint.groundingSources}
+              />
             </div>
           )}
 
