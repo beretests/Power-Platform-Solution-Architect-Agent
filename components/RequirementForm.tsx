@@ -129,7 +129,11 @@ export const RequirementForm: React.FC<RequirementFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="w-full space-y-5">
+    <form
+      onSubmit={handleSubmit}
+      className="w-full space-y-5"
+      autoComplete="off"
+    >
       <div
         className="grid gap-2 rounded-lg border border-slate-200 bg-slate-50 p-1 sm:grid-cols-2"
         role="tablist"

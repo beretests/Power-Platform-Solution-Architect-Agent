@@ -35,18 +35,42 @@ Power Platform Architect Agent accelerates that early architecture work while ma
 
 ## Demo Screenshots
 
-> Placeholder: Add final screenshots before submission.
+<details>
+<summary>View demo screenshots</summary>
 
-- `docs/screenshots/01-generate-architecture.png`
-- `docs/screenshots/02-review-board.png`
-- `docs/screenshots/03-dashboard-tabs.png`
-- `docs/screenshots/04-export-panel.png`
+Generate Architecture mode accepts a plain-language business requirement and turns it into a structured Power Platform architecture request.
+
+![Generate Architecture mode](docs/screenshots/01-generate-architecture.png)
+
+Solution Review Board mode reviews an existing design for production readiness, governance gaps, and priority fixes.
+
+![Solution Review Board mode](docs/screenshots/02-solution-review-board.png)
+
+The result dashboard summarizes readiness scoring, key recommendations, and architecture outputs in tabbed review sections.
+
+![Overview and readiness dashboard](docs/screenshots/03-overview-readiness.png)
+
+Grounding sources show whether the output came from Foundry IQ, local guidance, or mock demo data.
+
+![Grounding sources](docs/screenshots/04-grounding-sources.png)
+
+Implementation tabs provide Dataverse, Power Automate, security, ALM, risk, and architecture diagram details.
+
+![Dataverse and flow design](docs/screenshots/05-dataverse-flows.png)
+
+![Security and ALM guidance](docs/screenshots/06-security-alm.png)
+
+![Rendered architecture diagram](docs/screenshots/07-architecture-diagram.png)
+
+The export panel creates handoff-ready Markdown, JSON, and Mermaid artifacts.
+
+![Export panel](docs/screenshots/08-export-panel.png)
+
+</details>
 
 ## Demo Video
 
-> Placeholder: Add the final demo video link before submission.
-
-- Demo video: `https://<your-demo-video-link>`
+- [Play the demo video](https://player.vimeo.com/progressive_redirect/playback/1201434141/rendition/720p/file.mp4%20%28720p%29.mp4?loc=external&signature=97130b8bab10b858ef2e9bde89f33b1d9905277bb1c10f259eda8aa1f24d2228)
 
 ## Architecture Diagram
 

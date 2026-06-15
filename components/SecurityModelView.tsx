@@ -140,8 +140,8 @@ export const SecurityModelView: React.FC<SecurityModelViewProps> = ({
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200">
-                          {tablePrivileges.map((permission) => (
-                            <tr key={permission.table}>
+                          {tablePrivileges.map((permission, index) => (
+                            <tr key={`${permission.table}-${index}`}>
                               <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap">
                                 {permission.table}
                               </td>
